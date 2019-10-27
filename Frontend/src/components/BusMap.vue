@@ -1,32 +1,47 @@
 <template>
     <l-map :zoom="zoom" :center="center">
+        <l-icon-default :image-path="'/statics/leafletImages/'"></l-icon-default>
         <l-tile-layer :url="url" :attribution="attribution"></l-tile-layer>
-        <l-marker v-for="bus in buses" :lat-lng="getLatLngFromVehicleInfo(bus)" :icon="busIcon">
-            <l-tooltip :options="{permanent: true}">
-                {{bus.Lines}}
-            </l-tooltip>
-        </l-marker>
-        <l-marker v-for="tram in trams" :lat-lng="getLatLngFromVehicleInfo(tram)" :icon="tramIcon">
-            {{zoom}}
-            <l-tooltip :options="{permanent: true}">
-                {{tram.Lines}}
-            </l-tooltip>
-        </l-marker>
+        <l-marker-cluster :options="{animateAddingMarkers:false, animate:false, maxClusterRadius:60}" @spiderfied="1">
+            <template v-for="vehicle in vehicles">
+                <l-marker v-if="vehicle.type===1" v-bind:key="vehicle.id" :lat-lng="getLatLngFromVehicleInfo(vehicle)"
+                          v-bind:icon="busIcon">
+                    <l-tooltip :options="{permanent: true}">
+                        {{vehicle.line}}
+                    </l-tooltip>
+                    <l-popup>
+                        {{vehicle}}
+                    </l-popup>
+                </l-marker>
+                <l-marker v-else-if="vehicle.type===2" v-bind:key="vehicle.id"
+                          :lat-lng="getLatLngFromVehicleInfo(vehicle)"
+                          v-bind:icon="tramIcon">
+                    <l-tooltip :options="{permanent: true}" :content="vehicle.line">
+                    </l-tooltip>
+                    <l-popup>
+                        {{vehicle}}
+                    </l-popup>
+                </l-marker>
+            </template>
+
+        </l-marker-cluster>
     </l-map>
 </template>
 
 <script>
-    import {LMap, LTileLayer, LMarker, LTooltip} from 'vue2-leaflet'
+    import {LMap, LTileLayer, LMarker, LTooltip, LPopup} from 'vue2-leaflet'
     import {latLng, icon} from "leaflet";
+    import Vue2LeafletMarkerCluster from 'vue2-leaflet-markercluster'
 
     export default {
         name: "MapPanel",
-        components: {LMap, LTileLayer, LMarker, LTooltip},
+        components: {LMap, LTileLayer, LMarker, LTooltip, LPopup, 'l-marker-cluster': Vue2LeafletMarkerCluster},
         props: ["controls"],
         data: () => ({
             zoom: 21,
             center: latLng(52.25265306914573, 20.898388624191284),
             url: 'http://{s}.tile.osm.org/{z}/{x}/{y}.png',
+            apiUrl: "http://localhost:8282",
             attribution: '&copy; <a href="http://osm.org/copyright">OpenStreetMap</a> contributors',
             busIcon: icon({
                 iconUrl: require("../assets/BusIcon.png"),
@@ -38,46 +53,32 @@
                 iconSize: [20, 20],
                 iconAnchor: [10, 10]
             }),
-            buses: [{Lat: 52.25265306914573, Lon: 20.898388624191284, Lines: "Test"}, {
-                Lat: 52.25265306914573,
-                Lon: 20.898388624191284,
-                Lines: "Test"
-            }, {
-                Lat: 52.25265306914573,
-                Lon: 20.898388624191284,
-                Lines: "Test"
-            }, {
-                Lat: 52.25265306914573,
-                Lon: 20.898388624191284,
-                Lines: "Test"
-            }, {
-                Lat: 52.25265306914573,
-                Lon: 20.898388624191284,
-                Lines: "Test"
-            }, {
-                Lat: 52.25265306914573,
-                Lon: 20.898388624191284,
-                Lines: "Test"
+            vehicles: [{
+                latitude: 52.25265306914573,
+                longitude: 20.898388624191284,
+                line: `localhost:8282/vehicle_location?lines=`.concat(["122", "154", "133", "155"])
             }],
-            trams: [],
         }),
         methods: {
             getLatLngFromVehicleInfo(vehicleInfo) {
-                return latLng(vehicleInfo.Lat, vehicleInfo.Lon)
+                return latLng(vehicleInfo.latitude, vehicleInfo.longitude)
             },
-            getWarsawApiUrl(type, apiKey) {
-                return `https://api.um.warszawa.pl/api/action/busestrams_get/?resource_id=f2e5503e-927d-4ad3-9500-4ab9e55deb59&apikey=${apiKey}&type=${type}`
+            getApiUrl(lines) {
+                return `${this.apiUrl}/vehicle_location?lines=`.concat(lines);
             },
             updateVehicles() {
-                this.$http.get(this.getWarsawApiUrl(1, process.env.VUE_APP_WARSAW_API_SECRET_KEY)).then(result => this.buses = result.data.result);
-                this.$http.get(this.getWarsawApiUrl(2, process.env.VUE_APP_WARSAW_API_SECRET_KEY)).then(result => this.trams = result.data.result);
+                this.$http.get(this.getApiUrl(this.controls.lines)).then(result => this.vehicles = result.data);
             }
         },
         mounted() {
-            //this.updateVehicles();
-            //window.setInterval(() => this.updateVehicles(), 10000);
+            this.updateVehicles();
+            window.setInterval(() => this.updateVehicles(), 10000);
 
         }
     }
 </script>
+<style scoped>
+    @import "~leaflet.markercluster/dist/MarkerCluster.css";
+    @import "~leaflet.markercluster/dist/MarkerCluster.Default.css";
+</style>
 

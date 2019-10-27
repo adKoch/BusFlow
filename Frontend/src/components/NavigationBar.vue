@@ -6,16 +6,3 @@
     </v-app-bar>
   </v-container>
 </template>
-
-<script>
-export default {
-  name:"NavigationBar",
-  data: () => ({})
-};
-</script>
-
-<style scoped>
-.toolbar {
-  width: 100%;
-}
-</style>
