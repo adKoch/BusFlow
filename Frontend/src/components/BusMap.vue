@@ -2,7 +2,9 @@
     <l-map :zoom="zoom" :center="center">
         <l-icon-default :image-path="'/statics/leafletImages/'"></l-icon-default>
         <l-tile-layer :url="url" :attribution="attribution"></l-tile-layer>
-        <l-marker-cluster :options="{animateAddingMarkers:false, animate:false, maxClusterRadius:60, iconCreateFunction:vehicleMarkerClusterIcon}" :icon="busIcon">
+        <l-marker-cluster
+                :options="{animateAddingMarkers:false, animate:false, maxClusterRadius:60, iconCreateFunction:vehicleMarkerClusterIcon}"
+                :icon="busIcon">
             <template v-for="vehicle in vehicles">
                 <l-marker v-if="vehicle.type===1"
                           :key="vehicle.id"
@@ -64,8 +66,9 @@
                 iconAnchor: [12, 12]
             },
             vehicles: [],
-            busesName:"Autobusy",
-            tramName:"Tramwaje"
+            clusterMarkerHtml: `
+
+            `
         }),
         methods: {
             getLatLngFromVehicleInfo(vehicleInfo) {
@@ -77,29 +80,43 @@
             updateVehicles() {
                 this.$http.get(this.getApiUrl(this.controls.lines)).then(result => this.vehicles = result.data);
             },
-            summedClusterTooltip: function (childMarkers) {
-                return`${this.busesName}
-                    ${childMarkers.filter(marker=>marker.options.vehicleType===1)
-                        .map(marker=>`${marker.options.vehicleLine}\n`)}
-                        ${this.tramName}
-                    ${childMarkers.filter(marker=>marker.options.vehicleType===2)
-                        .map(marker=>`\n ${marker.options.vehicleLine}`)}
-                `
+            countedLinesFromChildren: function (childMarkers) {
+                return childMarkers
+                    .map(marker => {
+                        return {line: marker.options.vehicleLine, count: 1};
+                    })
+                    .reduce((a, b) => {
+                        a[b.line] = (a[b.line] || 0) + b.count;
+                        return a;
+                    }, {});
             },
+            formatLines: function (countedLines) {
+                let formattedLines = "";
+                for (let countedLineKey of Object.keys(countedLines)) {
+                    formattedLines += countedLineKey +
+                        " x" +
+                        countedLines[countedLineKey] + "\n";
+                }
+                return formattedLines;
+            }
+            ,
             //Default functionality
             vehicleMarkerClusterIcon: function (cluster) {
-               // console.log(cluster.getAllChildMarkers());
-               // console.log(this.summedClusterTooltip(cluster.getAllChildMarkers()));
+                // console.log(this.formatLines(this.countedLinesFromChildren(cluster.getAllChildMarkers())));
+                // console.log(this.countedLinesFromChildren(cluster.getAllChildMarkers()));
 
                 return divIcon({
                     className: "VehicleMarkerCluster",
                     html: `
-                    <img src=${require('../assets/VehicleClusterIcon.png')} height="25px" width="25px" class="VehicleMarkerCluster">
+                    <img src=${require('../assets/VehicleClusterIcon.png')} height="25px" width="25px" class="VehicleMarkerClusterImage">
+                        <span class="VehicleMarkerClusterText">${this.formatLines(this.countedLinesFromChildren(cluster.getAllChildMarkers()))}</span>
+                    </img>
                     `,
                     iconSize: this.vehicleMarkerClusterIconSpecification.iconSize,
                     iconAnchor: this.vehicleMarkerClusterIconSpecification.iconAnchor,
                 })
-            },
+            }
+            ,
         },
         mounted() {
             this.updateVehicles();
@@ -112,9 +129,25 @@
     @import "~leaflet.markercluster/dist/MarkerCluster.css";
     @import "~leaflet.markercluster/dist/MarkerCluster.Default.css";
 
-    .VehicleMarkerCluster{
+    .VehicleMarkerClusterImage {
         width: 25px;
         height: 25px;
+        position: relative;
+        display: inline-block;
+        border-bottom: 1px dotted black;
+    }
+    .VehicleMarkerClusterText {
+        visibility: visible;
+        width: 120px;
+        background-color: black;
+        color: #fff;
+        text-align: center;
+        padding: 5px 0;
+        border-radius: 6px;
+
+        /* Position the tooltip text - see examples below! */
+        position: absolute;
+        z-index: 1;
     }
 </style>
 
