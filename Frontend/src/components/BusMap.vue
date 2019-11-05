@@ -7,7 +7,7 @@
                 :icon="busIcon"
                 class="VehicleMarkerCluster">
             <template v-for="vehicle in vehicles">
-                <l-marker v-if="vehicle.type===1"
+                <l-marker v-if="controls.showBus && vehicle.type===1"
                           :key="vehicle.id"
                           :lat-lng="getLatLngFromVehicleInfo(vehicle)"
                           :icon="busIcon"
@@ -15,20 +15,14 @@
                     <l-tooltip :options="{permanent: true}">
                         {{vehicle.line}}
                     </l-tooltip>
-                    <l-popup>
-                        {{vehicle}}
-                    </l-popup>
                 </l-marker>
-                <l-marker v-else-if="vehicle.type===2"
+                <l-marker v-else-if="controls.showTram && vehicle.type===2"
                           :key="vehicle.id"
                           :lat-lng="getLatLngFromVehicleInfo(vehicle)"
                           :icon="tramIcon"
                           :options="{vehicleLine:vehicle.line, vehicleType: vehicle.type}">
                     <l-tooltip :options="{permanent: true}" :content="vehicle.line">
                     </l-tooltip>
-                    <l-popup>
-                        {{vehicle}}
-                    </l-popup>
                 </l-marker>
             </template>
 
@@ -37,13 +31,13 @@
 </template>
 
 <script>
-    import {LMap, LTileLayer, LMarker, LTooltip, LPopup} from 'vue2-leaflet'
+    import {LMap, LTileLayer, LMarker, LTooltip} from 'vue2-leaflet'
     import {latLng, icon, divIcon} from "leaflet";
     import Vue2LeafletMarkerCluster from 'vue2-leaflet-markercluster'
 
     export default {
         name: "MapPanel",
-        components: {LMap, LTileLayer, LMarker, LTooltip, LPopup, 'l-marker-cluster': Vue2LeafletMarkerCluster},
+        components: {LMap, LTileLayer, LMarker, LTooltip, 'l-marker-cluster': Vue2LeafletMarkerCluster},
         props: ["controls"],
         data: () => ({
             zoom: 21,
@@ -91,17 +85,17 @@
             },
             formatLines: function (countedLines) {
                 let formattedLines = "";
-                let iter=0;
+                let iter = 0;
                 for (let countedLineKey of Object.keys(countedLines)) {
-                    if(iter===this.maxLinesPerCluster){
-                        formattedLines+="<div>...<div/>";
+                    if (iter === this.maxLinesPerCluster) {
+                        formattedLines += "<div>...<div/>";
                         break;
                     } else {
                         iter++;
                     }
-                    if(countedLines[countedLineKey]===1){
+                    if (countedLines[countedLineKey] === 1) {
                         formattedLines += `<div>${countedLineKey}\n<div/>`
-                    }else {
+                    } else {
                         formattedLines += `<div>${countedLineKey} x${countedLines[countedLineKey]}\n<div/>`;
                     }
                 }
@@ -151,6 +145,7 @@
         border-bottom: 1px dotted black;
 
     }
+
     .VehicleMarkerClusterText {
         visibility: visible;
         width: 120px;

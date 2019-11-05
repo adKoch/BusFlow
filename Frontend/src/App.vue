@@ -2,13 +2,14 @@
     <v-app>
         <v-navigation-drawer v-model="controlPanelVisibility" app fixed clipped>
             <div class="controlPanel">
-                <v-checkbox v-model="mapControls.showTooltips" :label="showTooltipCheckboxLabel"></v-checkbox>
+                <v-checkbox v-model="mapControls.showBus" :label="showBusLabel"></v-checkbox>
+                <v-checkbox v-model="mapControls.showTram" :label="showTramLabel"></v-checkbox>
                 <v-combobox
                         v-model="mapControls.lines"
                         chips
                         multiple
-                        label="Linie"
-                        hint="np. 122, E-9, 220..."
+                        :label="linesLabel"
+                        :hint="linesHint"
                 ></v-combobox>
             </div>
         </v-navigation-drawer>
@@ -33,10 +34,14 @@
         },
         data: () => ({
             name: "BusFlow",
-            showTooltipCheckboxLabel: "Pokaż linie",
+            linesLabel: "Linie",
+            linesHint: "np. 122, E-9, 220...",
+            showTramLabel: "Tramwaje",
+            showBusLabel: "Autobusy",
             controlPanelVisibility: null,
             mapControls: {
-                showTooltips: true,
+                showTram: true,
+                showBus: true,
                 lines: [],
             }
         }),
