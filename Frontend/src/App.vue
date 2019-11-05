@@ -2,8 +2,10 @@
     <v-app>
         <v-navigation-drawer v-model="controlPanelVisibility" app fixed clipped>
             <div class="controlPanel">
-                <v-checkbox v-model="mapControls.showBus" :label="showBusLabel"></v-checkbox>
-                <v-checkbox v-model="mapControls.showTram" :label="showTramLabel"></v-checkbox>
+                <v-row>
+                    <v-checkbox v-model="mapControls.showBus" :label="showBusLabel" class="mx-2"></v-checkbox>
+                    <v-checkbox v-model="mapControls.showTram" :label="showTramLabel" class="mx-2"></v-checkbox>
+                </v-row>
                 <v-combobox
                         v-model="mapControls.lines"
                         chips
