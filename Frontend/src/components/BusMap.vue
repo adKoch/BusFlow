@@ -4,7 +4,8 @@
         <l-tile-layer :url="url" :attribution="attribution"></l-tile-layer>
         <l-marker-cluster
                 :options="{animateAddingMarkers:false, animate:false, maxClusterRadius:60, iconCreateFunction:vehicleMarkerClusterIcon}"
-                :icon="busIcon">
+                :icon="busIcon"
+                class="VehicleMarkerCluster">
             <template v-for="vehicle in vehicles">
                 <l-marker v-if="vehicle.type===1"
                           :key="vehicle.id"
@@ -66,9 +67,7 @@
                 iconAnchor: [12, 12]
             },
             vehicles: [],
-            clusterMarkerHtml: `
-
-            `
+            maxLinesPerCluster: 3
         }),
         methods: {
             getLatLngFromVehicleInfo(vehicleInfo) {
@@ -92,25 +91,43 @@
             },
             formatLines: function (countedLines) {
                 let formattedLines = "";
+                let iter=0;
                 for (let countedLineKey of Object.keys(countedLines)) {
-                    formattedLines += countedLineKey +
-                        " x" +
-                        countedLines[countedLineKey] + "\n";
+                    if(iter===this.maxLinesPerCluster){
+                        formattedLines+="<div>...<div/>";
+                        break;
+                    } else {
+                        iter++;
+                    }
+                    if(countedLines[countedLineKey]===1){
+                        formattedLines += `<div>${countedLineKey}\n<div/>`
+                    }else {
+                        formattedLines += `<div>${countedLineKey} x${countedLines[countedLineKey]}\n<div/>`;
+                    }
                 }
                 return formattedLines;
             }
             ,
             //Default functionality
             vehicleMarkerClusterIcon: function (cluster) {
-                // console.log(this.formatLines(this.countedLinesFromChildren(cluster.getAllChildMarkers())));
-                // console.log(this.countedLinesFromChildren(cluster.getAllChildMarkers()));
-
                 return divIcon({
                     className: "VehicleMarkerCluster",
                     html: `
-                    <img src=${require('../assets/VehicleClusterIcon.png')} height="25px" width="25px" class="VehicleMarkerClusterImage">
-                        <span class="VehicleMarkerClusterText">${this.formatLines(this.countedLinesFromChildren(cluster.getAllChildMarkers()))}</span>
-                    </img>
+
+                    <img src=${require('../assets/VehicleClusterIcon.png')} height="25px" width="25px"/>
+                    <span style="visibility: visible;
+                            min-width: 50px;
+                            background-color: white;
+                            color: #000;
+                            text-align: left;
+                            padding: 5px;
+                            border-radius: 6px;
+                            position: absolute;
+                            z-index: 1;
+                            top: -20px;
+                            left: 105%; ">
+                            ${this.formatLines(this.countedLinesFromChildren(cluster.getAllChildMarkers()))}
+                        </span>
                     `,
                     iconSize: this.vehicleMarkerClusterIconSpecification.iconSize,
                     iconAnchor: this.vehicleMarkerClusterIconSpecification.iconAnchor,
@@ -121,13 +138,10 @@
         mounted() {
             this.updateVehicles();
             window.setInterval(() => this.updateVehicles(), 10000);
-
         }
     }
 </script>
 <style scoped>
-    @import "~leaflet.markercluster/dist/MarkerCluster.css";
-    @import "~leaflet.markercluster/dist/MarkerCluster.Default.css";
 
     .VehicleMarkerClusterImage {
         width: 25px;
@@ -135,6 +149,7 @@
         position: relative;
         display: inline-block;
         border-bottom: 1px dotted black;
+
     }
     .VehicleMarkerClusterText {
         visibility: visible;
