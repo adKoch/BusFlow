@@ -2,14 +2,24 @@
     <v-app>
         <v-navigation-drawer v-model="controlPanelVisibility" app fixed clipped>
             <div class="controlPanel">
+                <v-alert :type="requestAlert.type"
+                         class="mt-2"
+                         dismissible
+                         v-show="requestAlert.visible"
+                         dense
+                         prominent
+                         outlined>
+                    {{requestAlert.message}}
+                </v-alert>
                 <v-card ref="requestStatusCard"
                         loader-height="7"
+                        :loader="dataLoad.isBeingLoaded"
                         class="mt-4">
                     <v-container>
                         <v-row align="center">
                             <v-col>
                                 <v-card-text>
-                                    {{dataLoadingText}}{{dataLoad.interval-dataLoad.state}}s
+                                    {{dataLoadingText}} {{dataLoad.interval-dataLoad.state}}s
                                 </v-card-text>
                             </v-col>
                             <v-col>
@@ -66,7 +76,12 @@
             linesHint: "np. 122, E-9, 220...",
             showTramLabel: "Tramwaje",
             showBusLabel: "Autobusy",
-            dataLoadingText: "Odświeżenie danych położenia pojazdów za ",
+            dataLoadingText: "Odświeżenie danych położenia pojazdów za",
+            requestAlert: {
+                visible: false,
+                type: "info",
+                message: ""
+            },
             controlPanelVisibility: null,
             mapControls: {
                 showTram: true,
@@ -77,39 +92,61 @@
             dataLoad: {
                 interval: 10,
                 step: 1,
-                state: 0
+                state: 0,
+                infoMessage: "Dane są poprawnie ładowane",
+                networkErrorMessage: "Problem z pobieraniem danych! Sprawdź połączenie z siecią...",
+                emptyDataMessage: "Brak danych",
+                isBeingLoaded: false,
             }
         }),
         computed: {
             dataLoadingBarValue: function () {
-                return this.dataLoad.state/this.dataLoad.interval*100;
+                return this.dataLoad.state / this.dataLoad.interval * 100;
             }
         },
         methods: {
-            getApiUrl(lines) {
+            getApiUrl: function (lines) {
                 return `${this.apiUrl}/vehicle_location?lines=`.concat(lines);
             },
-            requestVehicleData() {
-                this.$refs.requestStatusCard.loading=true;
+            requestVehicleData: function () {
+                this.dataLoad.isBeingLoaded = true;
                 this.$http.get(this.getApiUrl(this.mapControls.lines)).then(result => {
+
                     this.mapControls.vehicles = result.data;
-                    this.$refs.requestStatusCard.loading=false;
-                }).catch(error=>{
-                    console.log(error)
+                    if (this.mapControls.vehicles.length === 0) {
+                        this.showAlert(this.dataLoad.emptyDataMessage, "warning");
+                    } else {
+                        this.showInfoAlertAfterOtherPresentAlert(this.dataLoad.infoMessage);
+                    }
+                    this.dataLoad.isBeingLoaded = false;
+                }).catch(() => {
+                    this.showAlert(this.dataLoad.networkErrorMessage, "error");
                 });
+            },
+            showAlert: function (message, type) {
+                this.requestAlert.visible = true;
+                this.requestAlert.type = type;
+                this.requestAlert.message = message;
+            },
+            showInfoAlertAfterOtherPresentAlert: function (message) {
+                if (this.requestAlert.visible === true && this.requestAlert.type !== "info") {
+                    this.requestAlert.type = "info";
+                    this.requestAlert.message = message;
+                }
             }
         },
         mounted() {
             this.requestVehicleData();
             window.setInterval(() => {
                 this.dataLoad.state += this.dataLoad.step;
-                if(this.dataLoad.state===this.dataLoad.interval){
-                    this.dataLoad.state=0;
+                if (this.dataLoad.state === this.dataLoad.interval) {
+                    this.dataLoad.state = 0;
                     this.requestVehicleData();
                 }
             }, this.dataLoad.step * 1000);
         }
-    };
+    }
+    ;
 </script>
 
 <style scoped>

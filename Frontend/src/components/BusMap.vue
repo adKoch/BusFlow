@@ -1,6 +1,5 @@
 <template>
     <l-map :zoom="zoom" :center="center">
-        <l-icon-default :image-path="'/statics/leafletImages/'"></l-icon-default>
         <l-tile-layer :url="url" :attribution="attribution"></l-tile-layer>
         <l-marker-cluster
                 :options="{animateAddingMarkers:false, animate:false, maxClusterRadius:60, iconCreateFunction:vehicleMarkerClusterIcon}"
