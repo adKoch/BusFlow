@@ -2,17 +2,41 @@
     <v-app>
         <v-navigation-drawer v-model="controlPanelVisibility" app fixed clipped>
             <div class="controlPanel">
+                <v-card ref="requestStatusCard"
+                        loader-height="7"
+                        class="mt-4">
+                    <v-container>
+                        <v-row align="center">
+                            <v-col>
+                                <v-card-text>
+                                    {{dataLoadingText}}{{dataLoad.interval-dataLoad.state}}s
+                                </v-card-text>
+                            </v-col>
+                            <v-col>
+                                <v-progress-circular v-bind:value="dataLoadingBarValue"
+                                                     size="60"
+                                                     width="7"
+                                                     color="indigo"
+                                                     class="text-center"
+                                                     rotate="270"></v-progress-circular>
+                            </v-col>
+                        </v-row>
+                    </v-container>
+                </v-card>
                 <v-row>
-                    <v-checkbox v-model="mapControls.showBus" :label="showBusLabel" class="mx-2"></v-checkbox>
-                    <v-checkbox v-model="mapControls.showTram" :label="showTramLabel" class="mx-2"></v-checkbox>
+                    <v-checkbox v-model="mapControls.showBus"
+                                :label="showBusLabel"
+                                class="mx-2"></v-checkbox>
+                    <v-checkbox v-model="mapControls.showTram"
+                                :label="showTramLabel"
+                                class="mx-2"></v-checkbox>
                 </v-row>
-                <v-combobox
-                        v-model="mapControls.lines"
-                        chips
-                        multiple
-                        :label="linesLabel"
-                        :hint="linesHint"
-                ></v-combobox>
+                <v-combobox v-model="mapControls.lines"
+                            chips
+                            multiple
+                            :label="linesLabel"
+                            :hint="linesHint">
+                </v-combobox>
             </div>
         </v-navigation-drawer>
         <v-app-bar color="indigo" dark app fixed clipped-left>
@@ -20,7 +44,8 @@
             <v-toolbar-title>{{name}}</v-toolbar-title>
         </v-app-bar>
         <v-content>
-            <busMap v-bind:controls="mapControls"></busMap>
+            <busMap v-bind:controls="mapControls">
+            </busMap>
         </v-content>
     </v-app>
 </template>
@@ -37,21 +62,58 @@
         data: () => ({
             name: "BusFlow",
             linesLabel: "Linie",
+            apiUrl: "http://localhost:8282",
             linesHint: "np. 122, E-9, 220...",
             showTramLabel: "Tramwaje",
             showBusLabel: "Autobusy",
+            dataLoadingText: "Odświeżenie danych położenia pojazdów za ",
             controlPanelVisibility: null,
             mapControls: {
                 showTram: true,
                 showBus: true,
                 lines: [],
+                vehicles: []
+            },
+            dataLoad: {
+                interval: 10,
+                step: 1,
+                state: 0
             }
         }),
+        computed: {
+            dataLoadingBarValue: function () {
+                return this.dataLoad.state/this.dataLoad.interval*100;
+            }
+        },
+        methods: {
+            getApiUrl(lines) {
+                return `${this.apiUrl}/vehicle_location?lines=`.concat(lines);
+            },
+            requestVehicleData() {
+                this.$refs.requestStatusCard.loading=true;
+                this.$http.get(this.getApiUrl(this.mapControls.lines)).then(result => {
+                    this.mapControls.vehicles = result.data;
+                    this.$refs.requestStatusCard.loading=false;
+                }).catch(error=>{
+                    console.log(error)
+                });
+            }
+        },
+        mounted() {
+            this.requestVehicleData();
+            window.setInterval(() => {
+                this.dataLoad.state += this.dataLoad.step;
+                if(this.dataLoad.state===this.dataLoad.interval){
+                    this.dataLoad.state=0;
+                    this.requestVehicleData();
+                }
+            }, this.dataLoad.step * 1000);
+        }
     };
 </script>
 
 <style scoped>
-    .controlPanel{
+    .controlPanel {
         margin-left: 10px;
         margin-right: 10px;
     }

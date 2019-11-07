@@ -6,7 +6,7 @@
                 :options="{animateAddingMarkers:false, animate:false, maxClusterRadius:60, iconCreateFunction:vehicleMarkerClusterIcon}"
                 :icon="busIcon"
                 class="VehicleMarkerCluster">
-            <template v-for="vehicle in vehicles">
+            <template v-for="vehicle in controls.vehicles">
                 <l-marker v-if="controls.showBus && vehicle.type===1"
                           :key="vehicle.id"
                           :lat-lng="getLatLngFromVehicleInfo(vehicle)"
@@ -43,7 +43,6 @@
             zoom: 21,
             center: latLng(52.25265306914573, 20.898388624191284),
             url: 'http://{s}.tile.osm.org/{z}/{x}/{y}.png',
-            apiUrl: "http://localhost:8282",
             attribution: '&copy; <a href="http://osm.org/copyright">OpenStreetMap</a> contributors',
             busIcon: icon({
                 iconUrl: require("../assets/BusIcon.png"),
@@ -60,18 +59,11 @@
                 iconSize: [24, 24],
                 iconAnchor: [12, 12]
             },
-            vehicles: [],
             maxLinesPerCluster: 3
         }),
         methods: {
             getLatLngFromVehicleInfo(vehicleInfo) {
                 return latLng(vehicleInfo.latitude, vehicleInfo.longitude)
-            },
-            getApiUrl(lines) {
-                return `${this.apiUrl}/vehicle_location?lines=`.concat(lines);
-            },
-            updateVehicles() {
-                this.$http.get(this.getApiUrl(this.controls.lines)).then(result => this.vehicles = result.data);
             },
             countedLinesFromChildren: function (childMarkers) {
                 return childMarkers
@@ -100,14 +92,11 @@
                     }
                 }
                 return formattedLines;
-            }
-            ,
-            //Default functionality
+            },
             vehicleMarkerClusterIcon: function (cluster) {
                 return divIcon({
                     className: "VehicleMarkerCluster",
                     html: `
-
                     <img src=${require('../assets/VehicleClusterIcon.png')} height="25px" width="25px"/>
                     <span style="visibility: visible;
                             min-width: 50px;
@@ -128,36 +117,6 @@
                 })
             }
             ,
-        },
-        mounted() {
-            this.updateVehicles();
-            window.setInterval(() => this.updateVehicles(), 10000);
         }
     }
 </script>
-<style scoped>
-
-    .VehicleMarkerClusterImage {
-        width: 25px;
-        height: 25px;
-        position: relative;
-        display: inline-block;
-        border-bottom: 1px dotted black;
-
-    }
-
-    .VehicleMarkerClusterText {
-        visibility: visible;
-        width: 120px;
-        background-color: black;
-        color: #fff;
-        text-align: center;
-        padding: 5px 0;
-        border-radius: 6px;
-
-        /* Position the tooltip text - see examples below! */
-        position: absolute;
-        z-index: 1;
-    }
-</style>
-
