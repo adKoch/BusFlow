@@ -14,7 +14,7 @@ class VehicleLocationController(@Autowired val vehicleLocationService: VehicleLo
     @GetMapping
     fun getAllLastRequested(@RequestParam(required = false) lines: List<String>?): Flux<VehicleLocation> {
         return if (lines.isNullOrEmpty())
-            vehicleLocationService.getLastRequestedVehicleLocations().log()
+            return Flux.empty()
         else
             vehicleLocationService.getLastRequestedVehicleLocations(lines).log()
     }

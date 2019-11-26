@@ -1,7 +1,6 @@
 package kochanski.adam.api.model
 
 import java.time.Instant
-import java.time.LocalDateTime
 import org.springframework.data.mongodb.core.mapping.Document
 
 @Document("vehicle_location")
