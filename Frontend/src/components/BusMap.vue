@@ -9,17 +9,15 @@
                 <l-popup>
                     <p>{{`${station.poolName} ${station.post}`}} > {{station.direction}}</p>
                     <p>{{stationLineLabel}}: {{station.lines.toString()}}</p>
-                    <p>{{(Math.trunc(station.lines.length/controls.areaLineMax * Math.pow(16,6))).toString(16)}}</p>
-                    <p>{{station.lines.length}} :  {{(station.lines.length/controls.areaLineMax)}}</p>
-                    <p>{{(Math.pow(16,6)-1).toString(16)}}</p>
                 </l-popup>
             </l-marker>
             <l-circle :key="station.id"
                       :lat-lng="getLatLngFromObject(station)"
                       :radius="controls.areaRadius* controls.areaMultiplier * controls.showArea"
-                      :fillColor="'#'+(Math.trunc(station.lines.length/controls.areaLineMax* (Math.pow(16,6)-1))).toString(16)"
-                      opacity="0.8"
-                      :color="'#'+(Math.trunc(station.lines.length/controls.areaLineMax* (Math.pow(16,6)-1))).toString(16)"
+                      :fillColor="getPartHexColor(station.lines.length, controls.areaLineMax)"
+                      :fillOpacity="0.1"
+                      :opacity="0.4"
+                      :color="getPartHexColor(station.lines.length, controls.areaLineMax)"
             ></l-circle>
         </template>
 
@@ -98,6 +96,19 @@
             stationLineLabel: "Linie",
         }),
         methods: {
+            getPartHexColor(value, maxValue, saturation = 0.8, lightness = 0.8) {
+                const h = 6 * value / maxValue;
+                const c = (1 - Math.abs(2 * lightness - 1)) * saturation;
+                const x = c * (1 - Math.abs(h % 2 - 1));
+                const m = lightness - c / 2;
+                if (h <= 1) return `#${Math.trunc((c + m)*255).toString(16)}${Math.trunc((x + m)*255).toString(16)}00`;
+                else if (h<=2) return `#${Math.trunc((x + m)*255).toString(16)}${Math.trunc((c + m)*255).toString(16)}00`;
+                else if (h<=3) return `#00${Math.trunc((c + m)*255).toString(16)}${Math.trunc((x + m)*255).toString(16)}`;
+                else if (h<=4) return `#00${Math.trunc((x + m)*255).toString(16)}${Math.trunc((c + m)*255).toString(16)}`;
+                else if (h<=5) return `#${Math.trunc((x + m)*255).toString(16)}00${Math.trunc((c + m)*255).toString(16)}`;
+                else return `#${Math.trunc((c + m)*255).toString(16)}00${Math.trunc((x + m)*255).toString(16)}`;
+
+            },
             getLatLngFromObject(objectWithLatLng) {
                 return latLng(objectWithLatLng.latitude, objectWithLatLng.longitude)
             },
