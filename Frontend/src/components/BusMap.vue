@@ -1,42 +1,73 @@
 <template>
     <l-map :zoom="zoom" :center="center">
         <l-tile-layer :url="url" :attribution="attribution"></l-tile-layer>
+        <template v-for="station in controls.stations"
+        >
+            <l-marker :key="station.id"
+                      :lat-lng="getLatLngFromObject(station)"
+                      :icon="stationIcon">
+                <l-popup>
+                    <p>{{`${station.poolName} ${station.post}`}} > {{station.direction}}</p>
+                    <p>{{stationLineLabel}}: {{station.lines.toString()}}</p>
+                    <p>{{(Math.trunc(station.lines.length/controls.areaLineMax * Math.pow(16,6))).toString(16)}}</p>
+                    <p>{{station.lines.length}} :  {{(station.lines.length/controls.areaLineMax)}}</p>
+                    <p>{{(Math.pow(16,6)-1).toString(16)}}</p>
+                </l-popup>
+            </l-marker>
+            <l-circle :key="station.id"
+                      :lat-lng="getLatLngFromObject(station)"
+                      :radius="controls.areaRadius* controls.areaMultiplier * controls.showArea"
+                      :fillColor="'#'+(Math.trunc(station.lines.length/controls.areaLineMax* (Math.pow(16,6)-1))).toString(16)"
+                      opacity="0.8"
+                      :color="'#'+(Math.trunc(station.lines.length/controls.areaLineMax* (Math.pow(16,6)-1))).toString(16)"
+            ></l-circle>
+        </template>
+
         <l-marker-cluster
                 :options="{animateAddingMarkers:false, animate:false, maxClusterRadius:60, iconCreateFunction:vehicleMarkerClusterIcon}"
                 :icon="busIcon"
                 class="VehicleMarkerCluster">
             <template v-for="vehicle in controls.vehicles">
-                <l-marker v-if="controls.showBus && vehicle.type===1"
-                          :key="vehicle.id"
-                          :lat-lng="getLatLngFromVehicleInfo(vehicle)"
-                          :icon="busIcon"
-                          :options="{vehicleLine:vehicle.line, vehicleType: vehicle.type}">
+                <l-marker
+                        v-if="controls.showBus && vehicle.type===1 && (controls.lines.length===0 || controls.lines.includes(vehicle.line))"
+                        :key="vehicle.id"
+                        :lat-lng="getLatLngFromObject(vehicle)"
+                        :icon="busIcon"
+                        :options="{vehicleLine:vehicle.line, vehicleType: vehicle.type}">
                     <l-tooltip :options="{permanent: true}">
                         {{vehicle.line}}
                     </l-tooltip>
                 </l-marker>
-                <l-marker v-else-if="controls.showTram && vehicle.type===2"
-                          :key="vehicle.id"
-                          :lat-lng="getLatLngFromVehicleInfo(vehicle)"
-                          :icon="tramIcon"
-                          :options="{vehicleLine:vehicle.line, vehicleType: vehicle.type}">
+                <l-marker
+                        v-else-if="controls.showTram && vehicle.type===2 && (controls.lines.length===0 || controls.lines.includes(vehicle.line))"
+                        :key="vehicle.id"
+                        :lat-lng="getLatLngFromObject(vehicle)"
+                        :icon="tramIcon"
+                        :options="{vehicleLine:vehicle.line, vehicleType: vehicle.type}">
                     <l-tooltip :options="{permanent: true}" :content="vehicle.line">
                     </l-tooltip>
                 </l-marker>
             </template>
-
         </l-marker-cluster>
     </l-map>
 </template>
 
 <script>
-    import {LMap, LTileLayer, LMarker, LTooltip} from 'vue2-leaflet'
+    import {LMap, LTileLayer, LMarker, LTooltip, LPopup, LCircle} from 'vue2-leaflet'
     import {latLng, icon, divIcon} from "leaflet";
     import Vue2LeafletMarkerCluster from 'vue2-leaflet-markercluster'
 
     export default {
         name: "MapPanel",
-        components: {LMap, LTileLayer, LMarker, LTooltip, 'l-marker-cluster': Vue2LeafletMarkerCluster},
+        components: {
+            LMap,
+            LTileLayer,
+            LMarker,
+            LTooltip,
+            LPopup,
+            LCircle,
+            'l-marker-cluster': Vue2LeafletMarkerCluster
+        },
         props: ["controls"],
         data: () => ({
             zoom: 21,
@@ -53,16 +84,22 @@
                 iconSize: [20, 20],
                 iconAnchor: [10, 10]
             }),
+            stationIcon: icon({
+                iconUrl: require("../assets/StationIcon.png"),
+                iconSize: [20, 20],
+                iconAnchor: [10, 10]
+            }),
             vehicleMarkerClusterIconSpecification: {
                 iconUrl: require("../assets/VehicleClusterIcon.png"),
                 iconSize: [24, 24],
                 iconAnchor: [12, 12]
             },
-            maxLinesPerCluster: 3
+            maxLinesPerCluster: 3,
+            stationLineLabel: "Linie",
         }),
         methods: {
-            getLatLngFromVehicleInfo(vehicleInfo) {
-                return latLng(vehicleInfo.latitude, vehicleInfo.longitude)
+            getLatLngFromObject(objectWithLatLng) {
+                return latLng(objectWithLatLng.latitude, objectWithLatLng.longitude)
             },
             countedLinesFromChildren: function (childMarkers) {
                 return childMarkers

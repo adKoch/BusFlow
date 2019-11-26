@@ -47,6 +47,38 @@
                             :label="linesLabel"
                             :hint="linesHint">
                 </v-combobox>
+                <v-row>
+                    <v-checkbox v-model="mapControls.showArea"
+                                :label="showAreaLabel"
+                                class="mx-2"></v-checkbox>
+                </v-row>
+                <v-row>
+                    <v-form>
+                        <v-text-field
+                                v-model="mapControls.areaLineMax"
+                                type="number"
+                                class="mx-5"
+                                :label="areaLineMaxLabel"
+                                :disabled="!mapControls.showArea"
+                        />
+                        <v-text-field
+                                v-model="mapControls.areaRadius"
+                                type="number"
+                                class="mx-5"
+                                :label="areaRadiusLabel"
+                                :disabled="!mapControls.showArea"
+                        />
+                    </v-form>
+                    <v-btn-toggle v-model="mapControls.areaMultiplier" tile group color="indigo" class="ma-5">
+                        <v-btn :value=1 :disabled="!mapControls.showArea">
+                            <span>m</span>
+                        </v-btn>
+                        <v-btn :value=1000 :disabled="!mapControls.showArea">
+                            <span>km</span>
+                        </v-btn>
+                    </v-btn-toggle>
+                </v-row>
+
             </div>
         </v-navigation-drawer>
         <v-app-bar color="indigo" dark app fixed clipped-left>
@@ -63,7 +95,6 @@
 <script>
     import BusMap from "./components/BusMap.vue";
 
-
     export default {
         name: "App",
         components: {
@@ -76,7 +107,10 @@
             linesHint: "np. 122, E-9, 220...",
             showTramLabel: "Tramwaje",
             showBusLabel: "Autobusy",
+            showAreaLabel: "Uwzględnij obszar",
+            areaLineMaxLabel: "Przyjęty limit linii na przystanku",
             dataLoadingText: "Odświeżenie danych położenia pojazdów za",
+            areaRadiusLabel: "Promień uwzględnianego obszaru",
             requestAlert: {
                 visible: false,
                 type: "info",
@@ -86,8 +120,13 @@
             mapControls: {
                 showTram: true,
                 showBus: true,
+                areaLineMax: 15,
+                showArea: false,
+                areaRadius: 150,
+                areaMultiplier: 1,
                 lines: [],
-                vehicles: []
+                vehicles: [],
+                stations: [],
             },
             dataLoad: {
                 interval: 10,
@@ -105,12 +144,15 @@
             }
         },
         methods: {
-            getApiUrl: function (lines) {
+            getLinesApiUrl: function (lines) {
                 return `${this.apiUrl}/vehicle_location?lines=`.concat(lines);
+            },
+            getStationsApiUrl: function (lines) {
+                return `${this.apiUrl}/station?lines=`.concat(lines);
             },
             requestVehicleData: function () {
                 this.dataLoad.isBeingLoaded = true;
-                this.$http.get(this.getApiUrl(this.mapControls.lines)).then(result => {
+                this.$http.get(this.getLinesApiUrl(this.mapControls.lines)).then(result => {
 
                     this.mapControls.vehicles = result.data;
                     if (this.mapControls.vehicles.length === 0) {
@@ -121,6 +163,12 @@
                     this.dataLoad.isBeingLoaded = false;
                 }).catch(() => {
                     this.showAlert(this.dataLoad.networkErrorMessage, "error");
+                    this.dataLoad.isBeingLoaded = false;
+                });
+            },
+            requestStationData() {
+                this.$http.get(this.getStationsApiUrl(this.mapControls.lines)).then(result => {
+                    this.mapControls.stations = result.data;
                 });
             },
             showAlert: function (message, type) {
@@ -137,11 +185,13 @@
         },
         mounted() {
             this.requestVehicleData();
+            this.requestStationData();
             window.setInterval(() => {
                 this.dataLoad.state += this.dataLoad.step;
                 if (this.dataLoad.state === this.dataLoad.interval) {
                     this.dataLoad.state = 0;
                     this.requestVehicleData();
+                    this.requestStationData();
                 }
             }, this.dataLoad.step * 1000);
         }
