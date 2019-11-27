@@ -33,52 +33,59 @@
                         </v-row>
                     </v-container>
                 </v-card>
-                <v-row>
-                    <v-checkbox v-model="mapControls.showBus"
-                                :label="showBusLabel"
-                                class="mx-2"></v-checkbox>
-                    <v-checkbox v-model="mapControls.showTram"
-                                :label="showTramLabel"
-                                class="mx-2"></v-checkbox>
-                </v-row>
-                <v-combobox v-model="mapControls.lines"
-                            chips
-                            multiple
-                            :label="linesLabel"
-                            :hint="linesHint">
-                </v-combobox>
-                <v-row>
-                    <v-checkbox v-model="mapControls.showArea"
-                                :label="showAreaLabel"
-                                class="mx-2"></v-checkbox>
-                </v-row>
-                <v-row>
-                    <v-form>
-                        <v-text-field
-                                v-model="mapControls.areaLineMax"
-                                type="number"
-                                class="mx-5"
-                                :label="areaLineMaxLabel"
-                                :disabled="!mapControls.showArea"
-                        />
-                        <v-text-field
-                                v-model="mapControls.areaRadius"
-                                type="number"
-                                class="mx-5"
-                                :label="areaRadiusLabel"
-                                :disabled="!mapControls.showArea"
-                        />
-                    </v-form>
-                    <v-btn-toggle v-model="mapControls.areaMultiplier" tile group color="indigo" class="ma-5">
-                        <v-btn :value=1 :disabled="!mapControls.showArea">
-                            <span>m</span>
-                        </v-btn>
-                        <v-btn :value=1000 :disabled="!mapControls.showArea">
-                            <span>km</span>
-                        </v-btn>
-                    </v-btn-toggle>
-                </v-row>
-
+                <v-tabs centered color="indigo" class="mt-4">
+                    <v-tab>{{exploreLabel}}</v-tab>
+                    <v-tab>{{studyLabel}}</v-tab>
+                    <v-tab-item>
+                        <v-row>
+                            <v-checkbox v-model="mapControls.showBus"
+                                        :label="showBusLabel"
+                                        class="mx-2"></v-checkbox>
+                            <v-checkbox v-model="mapControls.showTram"
+                                        :label="showTramLabel"
+                                        class="mx-2"></v-checkbox>
+                        </v-row>
+                        <v-combobox v-model="mapControls.lines"
+                                    chips
+                                    multiple
+                                    :label="linesLabel"
+                                    :hint="linesHint">
+                        </v-combobox>
+                    </v-tab-item>
+                    <v-tab-item>
+                        <v-row>
+                            <v-checkbox v-model="mapControls.showArea"
+                                        :label="showAreaLabel"
+                                        class="mx-2"></v-checkbox>
+                        </v-row>
+                        <v-row>
+                            <v-form>
+                                <v-text-field
+                                        v-model="mapControls.areaLineMax"
+                                        type="number"
+                                        class="mx-5"
+                                        :label="areaLineMaxLabel"
+                                        :disabled="!mapControls.showArea"
+                                />
+                                <v-text-field
+                                        v-model="mapControls.areaRadius"
+                                        type="number"
+                                        class="mx-5"
+                                        :label="areaRadiusLabel"
+                                        :disabled="!mapControls.showArea"
+                                />
+                            </v-form>
+                            <v-btn-toggle v-model="mapControls.areaMultiplier" tile group color="indigo" class="ma-5">
+                                <v-btn :value=1 :disabled="!mapControls.showArea">
+                                    <span>m</span>
+                                </v-btn>
+                                <v-btn :value=1000 :disabled="!mapControls.showArea">
+                                    <span>km</span>
+                                </v-btn>
+                            </v-btn-toggle>
+                        </v-row>
+                    </v-tab-item>
+                </v-tabs>
             </div>
         </v-navigation-drawer>
         <v-app-bar color="indigo" dark app fixed clipped-left>
@@ -111,6 +118,8 @@
             areaLineMaxLabel: "Przyjęty limit linii na przystanku",
             dataLoadingText: "Odświeżenie danych położenia pojazdów za",
             areaRadiusLabel: "Promień uwzględnianego obszaru",
+            exploreLabel: "Eksploruj",
+            studyLabel: "Badaj",
             requestAlert: {
                 visible: false,
                 type: "info",

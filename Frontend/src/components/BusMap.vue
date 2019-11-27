@@ -96,7 +96,7 @@
             stationLineLabel: "Linie",
         }),
         methods: {
-            getPartHexColor(value, maxValue, saturation = 0.8, lightness = 0.8) {
+            getPartHexColor(value, maxValue, saturation = 0.80, lightness = 0.65) {
                 const h = 6 * value / maxValue;
                 const c = (1 - Math.abs(2 * lightness - 1)) * saturation;
                 const x = c * (1 - Math.abs(h % 2 - 1));
