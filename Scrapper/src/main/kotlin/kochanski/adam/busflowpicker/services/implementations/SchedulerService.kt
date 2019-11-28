@@ -43,7 +43,7 @@ class SchedulerService(
     }
 
     @Transactional
-    @Scheduled(cron = "1 0 0 1 */1 *")
+    // @Scheduled(cron = "1 0 0 1 */1 *")
     fun scheduleStationUpdate() {
         stationRepository.deleteAll()
                 .log()
