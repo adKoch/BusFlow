@@ -6,12 +6,13 @@
         >
             <l-marker :key="station.id"
                       :lat-lng="getLatLngFromObject(station)"
-                      :icon="stationIcon">
+                      :icon="stationIcon"
+                      v-if="isPointInsideFigures(station.latitude,station.longitude,controls.circles,controls.polygons)">
                 <l-popup>
                     <p>{{`${station.poolName} ${station.post}`}} > {{station.direction}}</p>
                     <p>{{stationLineLabel}}:
                         {{station.lines.map(line=>" "+line).toString()}}</p>
-                    <p>{{geoShapes}}</p>
+                    <p>{{controls.circles.length!==0? distanceFromPoints(station.latitude,station.longitude, controls.circles[0].center.latitude, controls.circles[0].center.longitude) :""}}</p>
                 </l-popup>
             </l-marker>
             <l-circle :key="station.id"
@@ -21,6 +22,7 @@
                       :fillOpacity="0.1 * controls.showArea"
                       :opacity="0.4 * controls.showArea"
                       :color="getPartHexColor(station.lines.length, controls.areaLineMax)"
+                      v-if="isPointInsideFigures(station.latitude,station.longitude,controls.circles,controls.polygons)">
             ></l-circle>
         </template>
         <l-marker-cluster
@@ -29,7 +31,10 @@
                 class="VehicleMarkerCluster">
             <template v-for="vehicle in controls.vehicles">
                 <l-marker
-                        v-if="controls.showBus && vehicle.type===1 && (controls.lines.length===0 || controls.lines.includes(vehicle.line))"
+                        v-if="controls.showBus &&
+                        vehicle.type===1 &&
+                        (controls.lines.length===0 || controls.lines.includes(vehicle.line)) &&
+                        isPointInsideFigures(vehicle.latitude,vehicle.longitude,controls.circles,controls.polygons)"
                         :key="vehicle.id"
                         :lat-lng="getLatLngFromObject(vehicle)"
                         :icon="busIcon"
@@ -39,7 +44,10 @@
                     </l-tooltip>
                 </l-marker>
                 <l-marker
-                        v-else-if="controls.showTram && vehicle.type===2 && (controls.lines.length===0 || controls.lines.includes(vehicle.line))"
+                        v-else-if="controls.showTram &&
+                        vehicle.type===2 &&
+                        controls.lines.includes(vehicle.line) &&
+                        isPointInsideFigures(vehicle.latitude,vehicle.longitude,controls.circles,controls.polygons)"
                         :key="vehicle.id"
                         :lat-lng="getLatLngFromObject(vehicle)"
                         :icon="tramIcon"
@@ -78,7 +86,7 @@
             drawnPolygonColor: '#ff3636',
             drawnCircleColor: '#d1872c',
             drawnRectangleColor: '#b082ff',
-            geoShapes: [],
+            customShapeLayer: [],
             busIcon: icon({
                 iconUrl: require("../assets/BusIcon.png"),
                 iconSize: [20, 20],
@@ -171,13 +179,85 @@
                     iconSize: this.vehicleMarkerClusterIconSpecification.iconSize,
                     iconAnchor: this.vehicleMarkerClusterIconSpecification.iconAnchor,
                 })
-            }
-            ,
+            },
+            normaliseDrawnShapeLayer(shapeLayer) {
+                let newObject = {};
+                let type = "polygon";
+                try {
+                    shapeLayer.getLatLng();
+                    type = "circle"
+                } catch (e) {
+                    type = "polygon"
+                }
+                if (type === "circle") {
+                    newObject = {
+                        "type": "circle",
+                        "center": {
+                            "latitude": Object.values(shapeLayer.getLatLng())[0],
+                            "longitude": Object.values(shapeLayer.getLatLng())[1],
+                        },
+                        "radius": shapeLayer.getRadius()
+                    };
+                } else {
+                    const coordinates = shapeLayer.toGeoJSON()["geometry"]["coordinates"][0].map(latLngArray => {
+                        return {"latitude": latLngArray[1], "longitude": latLngArray[0]}
+                    });
+                    newObject = {
+                        "type": "polygon",
+                        "points": coordinates
+                    };
+                }
+                return newObject;
+            },
+            isPointInsidePolygon(latitude, longitude, polygon) {
+                const points = polygon.points;
+                let i = 0;
+                let j = points.length - 1;
+                let result = false;
+                while (i < points.length) {
+                    if (points[i].latitude > latitude !== points[j].latitude > latitude &&
+                        longitude < (points[j].longitude - points[i].longitude) *
+                        (latitude - points[i].latitude) / (points[j].latitude - points[i].latitude) + points[i].longitude) {
+                        result = !result
+                    }
+                    j = i++
+                }
+                return result;
+            },
+            distanceFromPoints(lat1, lon1, lat2, lon2) {
+                let p = 0.017453292519943295;    // Math.PI / 180
+                let c = Math.cos;
+                let a = 0.5 - c((lat2 - lat1) * p)/2 +
+                    c(lat1 * p) * c(lat2 * p) *
+                    (1 - c((lon2 - lon1) * p))/2;
+
+                return 12742000 * Math.asin(Math.sqrt(a)); // 2 * R; R = 6371000 m
+            },
+            isPointInsideCircle(latitude, longitude, circle) {
+                return this.distanceFromPoints(latitude, longitude, circle.center.latitude, circle.center.longitude) <= circle.radius
+            },
+            isPointInsideFigures(latitude, longitude, circles, polygons) {
+                if (polygons.length === 0 && circles.length === 0) return true;
+                let isInside = false;
+                polygons.forEach(polygon => {
+                        if (!isInside && this.isPointInsidePolygon(latitude, longitude, polygon)) {
+                            isInside = true
+                        }
+                    }
+                );
+                if (!isInside) circles.forEach(circle => {
+                        if (!isInside && this.isPointInsideCircle(latitude, longitude, circle)) {
+                            isInside = true
+                        }
+                    }
+                );
+                return isInside
+            },
         },
         mounted() {
             this.$nextTick(() => {
                 const map = this.$refs.map.mapObject;
-                const editableLayers = new window.L.FeatureGroup().addTo(map);
+                this.customShapeLayer = new window.L.FeatureGroup().addTo(map);
                 const drawControl = new window.L.Control.Draw({
                     position: 'bottomleft',
                     draw: {
@@ -200,8 +280,9 @@
                         marker: false
                     },
                     edit: {
-                        featureGroup: editableLayers,
+                        featureGroup: this.customShapeLayer,
                         remove: true,
+                        edit: false,
                     }
                 });
 
@@ -210,28 +291,36 @@
 
                 map.on(window.L.Draw.Event.CREATED, (e) => {
                     const layer = e.layer;
-                    editableLayers.addLayer(layer);
-                    let newObject = {};
+                    this.customShapeLayer.addLayer(layer);
+                    const figure = this.normaliseDrawnShapeLayer(layer);
 
-                    if (e.layerType === "circle") {
-                        newObject = {
-                            "type": "circle",
-                            "center": {
-                                "latitude": Object.values(layer.getLatLng())[0],
-                                "longitude": Object.values(layer.getLatLng())[1],
-                            },
-                            "radius": layer.getRadius()
-                        };
+                    if (figure["type"] === "circle") {
+                        this.controls.circles.push({
+                            center: figure["center"],
+                            radius: figure["radius"]
+                        })
                     } else {
-                        const coordinates = layer.toGeoJSON()["geometry"]["coordinates"][0].map(latLngArray => {
-                            return {"latitude": latLngArray[1], "longitude": latLngArray[0]}
-                        });
-                        newObject = {
-                            "type": "polygon",
-                            "points":coordinates
-                        };
+                        this.controls.polygons.push({
+                            points: figure["points"]
+                        })
                     }
-                    this.geoShapes.push(newObject);
+                });
+                map.on(window.L.Draw.Event.DELETED, (e) => {
+                    e.layers.eachLayer(layer => {
+                        let figure = this.normaliseDrawnShapeLayer(layer);
+                        if (figure["type"] === "circle") {
+                            figure = {
+                                center: figure["center"],
+                                radius: figure["radius"]
+                            };
+                            this.controls.circles = this.controls.circles.filter(circle => JSON.stringify(circle) !== JSON.stringify(figure));
+                        } else {
+                            figure = {
+                                points: figure["points"]
+                            };
+                            this.controls.polygons = this.controls.polygons.filter(polygon => JSON.stringify(polygon) !== JSON.stringify(figure));
+                        }
+                    });
                 });
             });
         }

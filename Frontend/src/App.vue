@@ -90,10 +90,12 @@
         </v-navigation-drawer>
         <v-app-bar color="indigo" dark app fixed clipped-left>
             <v-app-bar-nav-icon @click.stop="controlPanelVisibility = !controlPanelVisibility"></v-app-bar-nav-icon>
-            <v-toolbar-title>{{name}}</v-toolbar-title>
+            <v-toolbar-title>
+               circles: {{mapControls.circles}}
+            </v-toolbar-title>
         </v-app-bar>
         <v-content>
-            <busMap v-bind:controls="mapControls">
+            <busMap :controls="mapControls">
             </busMap>
         </v-content>
     </v-app>
@@ -136,6 +138,8 @@
                 lines: [],
                 vehicles: [],
                 stations: [],
+                circles: [],
+                polygons: [],
             },
             dataLoad: {
                 interval: 10,
@@ -153,30 +157,33 @@
             }
         },
         methods: {
-            getLinesApiUrl: function (lines) {
-                return `${this.apiUrl}/vehicle_location?lines=`.concat(lines);
+            getLocationsApiUrl: function (lines) {
+                return this.apiUrl + "/vehicle_location?" +
+                    `${lines.length > 0 ? `lines=${lines}&` : ""}`;
             },
             getStationsApiUrl: function (lines) {
-                return `${this.apiUrl}/station?lines=`.concat(lines);
+                return this.apiUrl + "/station?" +
+                    `${lines.length > 0 ? `lines=${lines}&` : ""}`;
             },
             requestVehicleData: function () {
                 this.dataLoad.isBeingLoaded = true;
-                this.$http.get(this.getLinesApiUrl(this.mapControls.lines)).then(result => {
-
-                    this.mapControls.vehicles = result.data;
-                    if (this.mapControls.vehicles.length === 0) {
-                        this.showAlert(this.dataLoad.emptyDataMessage, "warning");
-                    } else {
-                        this.showInfoAlertAfterOtherPresentAlert(this.dataLoad.infoMessage);
-                    }
-                    this.dataLoad.isBeingLoaded = false;
-                }).catch(() => {
+                this.$http.get(
+                    this.getLocationsApiUrl(this.mapControls.lines, this.mapControls.circles, this.mapControls.polygons))
+                    .then(result => {
+                        this.mapControls.vehicles = result.data;
+                        if (this.mapControls.vehicles.length === 0) {
+                            this.showAlert(this.dataLoad.emptyDataMessage, "warning");
+                        } else {
+                            this.showInfoAlertAfterOtherPresentAlert(this.dataLoad.infoMessage);
+                        }
+                        this.dataLoad.isBeingLoaded = false;
+                    }).catch(() => {
                     this.showAlert(this.dataLoad.networkErrorMessage, "error");
                     this.dataLoad.isBeingLoaded = false;
                 });
             },
             requestStationData() {
-                this.$http.get(this.getStationsApiUrl(this.mapControls.lines)).then(result => {
+                this.$http.get(this.getStationsApiUrl(this.mapControls.lines, this.mapControls.circles, this.mapControls.polygons)).then(result => {
                     this.mapControls.stations = result.data;
                 });
             },
@@ -193,8 +200,6 @@
             }
         },
         mounted() {
-            this.requestVehicleData();
-            this.requestStationData();
             window.setInterval(() => {
                 this.dataLoad.state += this.dataLoad.step;
                 if (this.dataLoad.state === this.dataLoad.interval) {
