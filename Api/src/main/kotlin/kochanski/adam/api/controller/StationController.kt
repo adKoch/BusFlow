@@ -8,7 +8,6 @@ import reactor.core.publisher.Flux
 
 @RestController
 @RequestMapping("/station")
-@CrossOrigin("http://localhost:8080")
 class StationController(@Autowired val stationService: StationService) {
 
     @GetMapping

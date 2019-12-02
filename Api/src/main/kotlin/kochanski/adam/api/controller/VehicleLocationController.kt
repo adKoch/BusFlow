@@ -8,7 +8,6 @@ import reactor.core.publisher.Flux
 
 @RestController
 @RequestMapping("/vehicle_location")
-@CrossOrigin("http://localhost:8080")
 class VehicleLocationController(@Autowired val vehicleLocationService: VehicleLocationService) {
 
     @GetMapping
