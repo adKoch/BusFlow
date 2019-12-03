@@ -49,7 +49,8 @@
                                     chips
                                     multiple
                                     :label="linesLabel"
-                                    :hint="linesHint">
+                                    :hint="linesHint"
+                                    v-on:change="dataLoad.linesChanged=true">
                         </v-combobox>
                     </v-tab-item>
                     <v-tab-item>
@@ -91,7 +92,7 @@
         <v-app-bar color="indigo" dark app fixed clipped-left>
             <v-app-bar-nav-icon @click.stop="controlPanelVisibility = !controlPanelVisibility"></v-app-bar-nav-icon>
             <v-toolbar-title>
-               circles: {{mapControls.circles}}
+                circles: {{mapControls.circles}}
             </v-toolbar-title>
         </v-app-bar>
         <v-content>
@@ -149,6 +150,7 @@
                 networkErrorMessage: "Problem z pobieraniem danych! Sprawdź połączenie z siecią...",
                 emptyDataMessage: "Brak danych",
                 isBeingLoaded: false,
+                linesChanged: false,
             }
         }),
         computed: {
@@ -205,7 +207,8 @@
                 if (this.dataLoad.state === this.dataLoad.interval) {
                     this.dataLoad.state = 0;
                     this.requestVehicleData();
-                    this.requestStationData();
+                    if (this.dataLoad.linesChanged) this.requestStationData();
+                    this.dataLoad.linesChanged = false;
                 }
             }, this.dataLoad.step * 1000);
         }

@@ -12,7 +12,6 @@
                     <p>{{`${station.poolName} ${station.post}`}} > {{station.direction}}</p>
                     <p>{{stationLineLabel}}:
                         {{station.lines.map(line=>" "+line).toString()}}</p>
-                    <p>{{controls.circles.length!==0? distanceFromPoints(station.latitude,station.longitude, controls.circles[0].center.latitude, controls.circles[0].center.longitude) :""}}</p>
                 </l-popup>
             </l-marker>
             <l-circle :key="station.id"
@@ -23,7 +22,8 @@
                       :opacity="0.4 * controls.showArea"
                       :color="getPartHexColor(station.lines.length, controls.areaLineMax)"
                       v-if="isPointInsideFigures(station.latitude,station.longitude,controls.circles,controls.polygons)">
-            ></l-circle>
+                >
+            </l-circle>
         </template>
         <l-marker-cluster
                 :options="{animateAddingMarkers:false, animate:false, maxClusterRadius:60, iconCreateFunction:vehicleMarkerClusterIcon}"
@@ -65,6 +65,7 @@
     import {latLng, icon, divIcon} from "leaflet";
     import Vue2LeafletMarkerCluster from 'vue2-leaflet-markercluster'
     import 'leaflet-draw'
+    import {circle, polygon, area, union, intersect} from '@turf/turf'
 
     export default {
         name: "MapPanel",
@@ -83,9 +84,7 @@
             center: latLng(52.25265306914573, 20.898388624191284),
             url: 'http://{s}.tile.osm.org/{z}/{x}/{y}.png',
             attribution: '&copy; <a href="http://osm.org/copyright">OpenStreetMap</a> contributors',
-            drawnPolygonColor: '#ff3636',
-            drawnCircleColor: '#d1872c',
-            drawnRectangleColor: '#b082ff',
+            drawnFigureColor: '#ff3636',
             customShapeLayer: [],
             busIcon: icon({
                 iconUrl: require("../assets/BusIcon.png"),
@@ -227,9 +226,9 @@
             distanceFromPoints(lat1, lon1, lat2, lon2) {
                 let p = 0.017453292519943295;    // Math.PI / 180
                 let c = Math.cos;
-                let a = 0.5 - c((lat2 - lat1) * p)/2 +
+                let a = 0.5 - c((lat2 - lat1) * p) / 2 +
                     c(lat1 * p) * c(lat2 * p) *
-                    (1 - c((lon2 - lon1) * p))/2;
+                    (1 - c((lon2 - lon1) * p)) / 2;
 
                 return 12742000 * Math.asin(Math.sqrt(a)); // 2 * R; R = 6371000 m
             },
@@ -253,6 +252,41 @@
                 );
                 return isInside
             },
+            circlesCoverageAreaInPolygon(areaPolygons, areaCircles, circles) {
+                areaPolygons = areaPolygons.map(pol => {
+                    return polygon([pol.points.map(point => {
+                        return [point.latitude, point.longitude]
+                    })]);
+                });
+                areaCircles = areaCircles.map(c => {
+                    return circle(
+                        [c.center.latitude, c.center.longitude],
+                        c.radius,
+                        {steps: 40, units: 'kilometers'}
+                    );
+                });
+                circles = circles.map(c => {
+                    return circle(
+                        [c.center.latitude, c.center.longitude],
+                        c.radius,
+                        {steps: 40, units: 'kilometers'}
+                    )
+                });
+                const combinedPolygons = union(areaPolygons,areaCircles);
+                const combinedCircles = union(circles);
+                const intersectedArea = intersect(combinedPolygons, combinedCircles);
+
+                return area(intersectedArea) / area(combinedPolygons);
+            },
+            circleFromPoint(latitude, longitude, radius) {
+                return {
+                    center: {
+                        latitude: latitude,
+                        longitude: longitude,
+                    },
+                    radius: radius,
+                }
+            }
         },
         mounted() {
             this.$nextTick(() => {
@@ -264,17 +298,17 @@
                         polyline: false,
                         polygon: {
                             shapeOptions: {
-                                color: this.drawnPolygonColor,
+                                color: this.drawnFigureColor,
                             },
                         },
                         rectangle: {
                             shapeOptions: {
-                                color: this.drawnRectangleColor,
+                                color: this.drawnFigureColor,
                             }
                         },
                         circle: {
                             shapeOptions: {
-                                color: this.drawnCircleColor,
+                                color: this.drawnFigureColor,
                             }
                         },
                         marker: false
@@ -285,10 +319,7 @@
                         edit: false,
                     }
                 });
-
                 map.addControl(drawControl);
-
-
                 map.on(window.L.Draw.Event.CREATED, (e) => {
                     const layer = e.layer;
                     this.customShapeLayer.addLayer(layer);
