@@ -92,7 +92,7 @@
         <v-app-bar color="indigo" dark app fixed clipped-left>
             <v-app-bar-nav-icon @click.stop="controlPanelVisibility = !controlPanelVisibility"></v-app-bar-nav-icon>
             <v-toolbar-title>
-                circles: {{mapControls.circles}}
+                {{name}}
             </v-toolbar-title>
         </v-app-bar>
         <v-content>
@@ -139,7 +139,6 @@
                 lines: [],
                 vehicles: [],
                 stations: [],
-                circles: [],
                 polygons: [],
             },
             dataLoad: {

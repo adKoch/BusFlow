@@ -2,16 +2,20 @@
 
     <l-map :zoom="zoom" :center="center" ref="map">
         <l-tile-layer :url="url" :attribution="attribution"></l-tile-layer>
-        <template v-for="station in controls.stations"
-        >
+        <l-polygon v-if="controls.polygons.length>0"
+                   :lat-lngs="getAsTurfUnion(controls.polygons).geometry.coordinates[0]"
+                   :color="drawnFigureColor"
+                   :fillColor="drawnFigureColor"/>
+        <template v-for="station in controls.stations">
             <l-marker :key="station.id"
                       :lat-lng="getLatLngFromObject(station)"
                       :icon="stationIcon"
-                      v-if="isPointInsideFigures(station.latitude,station.longitude,controls.circles,controls.polygons)">
+                      v-if="isPointInsidePolygons(station.latitude,station.longitude,controls.polygons)">
                 <l-popup>
                     <p>{{`${station.poolName} ${station.post}`}} > {{station.direction}}</p>
                     <p>{{stationLineLabel}}:
                         {{station.lines.map(line=>" "+line).toString()}}</p>
+                    <p>{{getAsTurfUnion(controls.polygons)===null?"":getAsTurfUnion(controls.polygons)}}</p>
                 </l-popup>
             </l-marker>
             <l-circle :key="station.id"
@@ -21,7 +25,7 @@
                       :fillOpacity="0.1 * controls.showArea"
                       :opacity="0.4 * controls.showArea"
                       :color="getPartHexColor(station.lines.length, controls.areaLineMax)"
-                      v-if="isPointInsideFigures(station.latitude,station.longitude,controls.circles,controls.polygons)">
+                      v-if="isPointInsidePolygons(station.latitude,station.longitude,controls.polygons)">
                 >
             </l-circle>
         </template>
@@ -34,7 +38,7 @@
                         v-if="controls.showBus &&
                         vehicle.type===1 &&
                         (controls.lines.length===0 || controls.lines.includes(vehicle.line)) &&
-                        isPointInsideFigures(vehicle.latitude,vehicle.longitude,controls.circles,controls.polygons)"
+                        isPointInsidePolygons(vehicle.latitude,vehicle.longitude,controls.polygons)"
                         :key="vehicle.id"
                         :lat-lng="getLatLngFromObject(vehicle)"
                         :icon="busIcon"
@@ -47,7 +51,7 @@
                         v-else-if="controls.showTram &&
                         vehicle.type===2 &&
                         controls.lines.includes(vehicle.line) &&
-                        isPointInsideFigures(vehicle.latitude,vehicle.longitude,controls.circles,controls.polygons)"
+                        isPointInsidePolygons(vehicle.latitude,vehicle.longitude,controls.polygons)"
                         :key="vehicle.id"
                         :lat-lng="getLatLngFromObject(vehicle)"
                         :icon="tramIcon"
@@ -61,11 +65,11 @@
 </template>
 
 <script>
-    import {LMap, LTileLayer, LMarker, LTooltip, LPopup, LCircle} from 'vue2-leaflet'
+    import {LMap, LTileLayer, LMarker, LTooltip, LPopup, LCircle, LPolygon} from 'vue2-leaflet'
     import {latLng, icon, divIcon} from "leaflet";
     import Vue2LeafletMarkerCluster from 'vue2-leaflet-markercluster'
     import 'leaflet-draw'
-    import {circle, polygon, area, union, intersect} from '@turf/turf'
+    import {polygon, union} from '@turf/turf'
 
     export default {
         name: "MapPanel",
@@ -76,6 +80,7 @@
             LTooltip,
             LPopup,
             LCircle,
+            LPolygon,
             'l-marker-cluster': Vue2LeafletMarkerCluster,
         },
         props: ["controls"],
@@ -86,6 +91,7 @@
             attribution: '&copy; <a href="http://osm.org/copyright">OpenStreetMap</a> contributors',
             drawnFigureColor: '#ff3636',
             customShapeLayer: [],
+            customShapePolygon: {},
             busIcon: icon({
                 iconUrl: require("../assets/BusIcon.png"),
                 iconSize: [20, 20],
@@ -108,6 +114,7 @@
             },
             maxLinesPerCluster: 3,
             stationLineLabel: "Linie",
+            customShapePolygonVisibility: true,
         }),
         methods: {
             getPartHexColor(value, maxValue) {
@@ -223,20 +230,8 @@
                 }
                 return result;
             },
-            distanceFromPoints(lat1, lon1, lat2, lon2) {
-                let p = 0.017453292519943295;    // Math.PI / 180
-                let c = Math.cos;
-                let a = 0.5 - c((lat2 - lat1) * p) / 2 +
-                    c(lat1 * p) * c(lat2 * p) *
-                    (1 - c((lon2 - lon1) * p)) / 2;
-
-                return 12742000 * Math.asin(Math.sqrt(a)); // 2 * R; R = 6371000 m
-            },
-            isPointInsideCircle(latitude, longitude, circle) {
-                return this.distanceFromPoints(latitude, longitude, circle.center.latitude, circle.center.longitude) <= circle.radius
-            },
-            isPointInsideFigures(latitude, longitude, circles, polygons) {
-                if (polygons.length === 0 && circles.length === 0) return true;
+            isPointInsidePolygons(latitude, longitude, polygons) {
+                if (polygons.length === 0) return true;
                 let isInside = false;
                 polygons.forEach(polygon => {
                         if (!isInside && this.isPointInsidePolygon(latitude, longitude, polygon)) {
@@ -244,49 +239,41 @@
                         }
                     }
                 );
-                if (!isInside) circles.forEach(circle => {
-                        if (!isInside && this.isPointInsideCircle(latitude, longitude, circle)) {
-                            isInside = true
-                        }
-                    }
-                );
                 return isInside
             },
-            circlesCoverageAreaInPolygon(areaPolygons, areaCircles, circles) {
-                areaPolygons = areaPolygons.map(pol => {
-                    return polygon([pol.points.map(point => {
-                        return [point.latitude, point.longitude]
-                    })]);
-                });
-                areaCircles = areaCircles.map(c => {
-                    return circle(
-                        [c.center.latitude, c.center.longitude],
-                        c.radius,
-                        {steps: 40, units: 'kilometers'}
-                    );
-                });
-                circles = circles.map(c => {
-                    return circle(
-                        [c.center.latitude, c.center.longitude],
-                        c.radius,
-                        {steps: 40, units: 'kilometers'}
-                    )
-                });
-                const combinedPolygons = union(areaPolygons,areaCircles);
-                const combinedCircles = union(circles);
-                const intersectedArea = intersect(combinedPolygons, combinedCircles);
-
-                return area(intersectedArea) / area(combinedPolygons);
+            hideCustomShapeLayer() {
+                this.customShapeLayer.setStyle({opacity: 0, fillOpacity: 0});
+                this.customShapePolygonVisibility = true;
             },
-            circleFromPoint(latitude, longitude, radius) {
-                return {
-                    center: {
-                        latitude: latitude,
-                        longitude: longitude,
-                    },
-                    radius: radius,
-                }
-            }
+            showCustomShapeLayer() {
+                this.customShapeLayer.setStyle({opacity: 0.3, fillOpacity: 0.3});
+                this.customShapePolygonVisibility = false;
+            },
+            polygonsToTurfPolygons(polygons) {
+                let retPolygons = [];
+                polygons.forEach(pol => {
+                    retPolygons.push(polygon([pol.points.map(point => {
+                        return [point.latitude, point.longitude]
+                    })]));
+                });
+                return retPolygons;
+            },
+            getAsTurfPolygons(polygons) {
+                let figures = [];
+                this.polygonsToTurfPolygons(polygons).forEach(polygon => figures.push(polygon));
+                return figures;
+            },
+            getAsTurfUnion(polygons) {
+                let figure = null;
+                this.getAsTurfPolygons(polygons).forEach(geoJson => {
+                    if (figure === null) {
+                        figure = geoJson;
+                    } else {
+                        figure = union(figure, geoJson);
+                    }
+                });
+                return figure;
+            },
         },
         mounted() {
             this.$nextTick(() => {
@@ -306,11 +293,8 @@
                                 color: this.drawnFigureColor,
                             }
                         },
-                        circle: {
-                            shapeOptions: {
-                                color: this.drawnFigureColor,
-                            }
-                        },
+                        circle: false,
+                        circlemarker: false,
                         marker: false
                     },
                     edit: {
@@ -324,34 +308,31 @@
                     const layer = e.layer;
                     this.customShapeLayer.addLayer(layer);
                     const figure = this.normaliseDrawnShapeLayer(layer);
+                    this.controls.polygons.push({
+                        points: figure["points"]
+                    })
 
-                    if (figure["type"] === "circle") {
-                        this.controls.circles.push({
-                            center: figure["center"],
-                            radius: figure["radius"]
-                        })
-                    } else {
-                        this.controls.polygons.push({
-                            points: figure["points"]
-                        })
-                    }
                 });
                 map.on(window.L.Draw.Event.DELETED, (e) => {
                     e.layers.eachLayer(layer => {
                         let figure = this.normaliseDrawnShapeLayer(layer);
-                        if (figure["type"] === "circle") {
-                            figure = {
-                                center: figure["center"],
-                                radius: figure["radius"]
-                            };
-                            this.controls.circles = this.controls.circles.filter(circle => JSON.stringify(circle) !== JSON.stringify(figure));
-                        } else {
-                            figure = {
-                                points: figure["points"]
-                            };
-                            this.controls.polygons = this.controls.polygons.filter(polygon => JSON.stringify(polygon) !== JSON.stringify(figure));
-                        }
+                        figure = {
+                            points: figure["points"]
+                        };
+                        this.controls.polygons = this.controls.polygons.filter(polygon => JSON.stringify(polygon) !== JSON.stringify(figure));
                     });
+                });
+                map.on(window.L.Draw.Event.DRAWSTART, () => {
+                    this.showCustomShapeLayer()
+                });
+                map.on(window.L.Draw.Event.DELETESTART, () => {
+                    this.showCustomShapeLayer()
+                });
+                map.on(window.L.Draw.Event.DRAWSTOP, () => {
+                    this.hideCustomShapeLayer()
+                });
+                map.on(window.L.Draw.Event.DELETESTOP, () => {
+                    this.hideCustomShapeLayer()
                 });
             });
         }
