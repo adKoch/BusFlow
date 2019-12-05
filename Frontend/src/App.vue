@@ -45,6 +45,11 @@
                                         :label="showTramLabel"
                                         class="mx-2"></v-checkbox>
                         </v-row>
+                        <v-row>
+                            <v-checkbox v-model="showDrawTool"
+                                        :label="showDrawToolLabel"
+                                        class="mx-2"></v-checkbox>
+                        </v-row>
                         <v-combobox v-model="mapControls.lines"
                                     chips
                                     multiple
@@ -96,7 +101,7 @@
             </v-toolbar-title>
         </v-app-bar>
         <v-content>
-            <busMap :controls="mapControls">
+            <busMap :controls="mapControls" :show-draw-tool="showDrawTool">
             </busMap>
         </v-content>
     </v-app>
@@ -123,12 +128,14 @@
             areaRadiusLabel: "Promień uwzględnianego obszaru",
             exploreLabel: "Eksploruj",
             studyLabel: "Badaj",
+            showDrawToolLabel: "Filtruj po figurze",
             requestAlert: {
                 visible: false,
                 type: "info",
                 message: ""
             },
             controlPanelVisibility: null,
+            showDrawTool: true,
             mapControls: {
                 showTram: true,
                 showBus: true,
@@ -172,7 +179,7 @@
                     this.getLocationsApiUrl(this.mapControls.lines, this.mapControls.circles, this.mapControls.polygons))
                     .then(result => {
                         this.mapControls.vehicles = result.data;
-                        if (this.mapControls.vehicles.length === 0) {
+                        if (this.mapControls.vehicles.length === 0 && this.mapControls.lines.length > 0) {
                             this.showAlert(this.dataLoad.emptyDataMessage, "warning");
                         } else {
                             this.showInfoAlertAfterOtherPresentAlert(this.dataLoad.infoMessage);
@@ -184,7 +191,7 @@
                 });
             },
             requestStationData() {
-                this.$http.get(this.getStationsApiUrl(this.mapControls.lines, this.mapControls.circles, this.mapControls.polygons)).then(result => {
+                this.$http.get(this.getStationsApiUrl(this.mapControls.lines)).then(result => {
                     this.mapControls.stations = result.data;
                 });
             },

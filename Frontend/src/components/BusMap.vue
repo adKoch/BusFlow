@@ -83,7 +83,7 @@
             LPolygon,
             'l-marker-cluster': Vue2LeafletMarkerCluster,
         },
-        props: ["controls"],
+        props: {controls: Object, showDrawTool: Boolean},
         data: () => ({
             zoom: 21,
             center: latLng(52.25265306914573, 20.898388624191284),
@@ -92,6 +92,7 @@
             drawnFigureColor: '#ff3636',
             customShapeLayer: [],
             customShapePolygon: {},
+            drawControl: {},
             busIcon: icon({
                 iconUrl: require("../assets/BusIcon.png"),
                 iconSize: [20, 20],
@@ -116,6 +117,13 @@
             stationLineLabel: "Linie",
             customShapePolygonVisibility: true,
         }),
+        watch: {
+            showDrawTool: {
+                handler(newVal) {
+                    this.toggleDrawTool(newVal);
+                }
+            },
+        },
         methods: {
             getPartHexColor(value, maxValue) {
                 const lightness = 1 - value / maxValue < 0.2 ? 0.2 : 1 - value / maxValue;
@@ -134,6 +142,11 @@
             },
             getLatLngFromObject(objectWithLatLng) {
                 return latLng(objectWithLatLng.latitude, objectWithLatLng.longitude)
+            },
+            toggleDrawTool(isOn) {
+                if (isOn) this.$refs.map.mapObject.addControl(this.drawControl);
+                else this.$refs.map.mapObject.removeControl(this.drawControl);
+                return isOn;
             },
             countedLinesFromChildren: function (childMarkers) {
                 return childMarkers
@@ -274,23 +287,19 @@
                 });
                 return figure;
             },
-        },
-        mounted() {
-            this.$nextTick(() => {
-                const map = this.$refs.map.mapObject;
-                this.customShapeLayer = new window.L.FeatureGroup().addTo(map);
-                const drawControl = new window.L.Control.Draw({
+            initDrawControl(shapeLayer, figureColor) {
+                this.drawControl = new window.L.Control.Draw({
                     position: 'bottomleft',
                     draw: {
                         polyline: false,
                         polygon: {
                             shapeOptions: {
-                                color: this.drawnFigureColor,
+                                color: figureColor,
                             },
                         },
                         rectangle: {
                             shapeOptions: {
-                                color: this.drawnFigureColor,
+                                color: figureColor,
                             }
                         },
                         circle: false,
@@ -298,20 +307,21 @@
                         marker: false
                     },
                     edit: {
-                        featureGroup: this.customShapeLayer,
+                        featureGroup: shapeLayer,
                         remove: true,
                         edit: false,
                     }
                 });
-                map.addControl(drawControl);
+            },
+            registerMapEvents() {
+                const map = this.$refs.map.mapObject;
                 map.on(window.L.Draw.Event.CREATED, (e) => {
                     const layer = e.layer;
                     this.customShapeLayer.addLayer(layer);
                     const figure = this.normaliseDrawnShapeLayer(layer);
                     this.controls.polygons.push({
                         points: figure["points"]
-                    })
-
+                    });
                 });
                 map.on(window.L.Draw.Event.DELETED, (e) => {
                     e.layers.eachLayer(layer => {
@@ -334,7 +344,17 @@
                 map.on(window.L.Draw.Event.DELETESTOP, () => {
                     this.hideCustomShapeLayer()
                 });
+            }
+        },
+        mounted() {
+            this.$nextTick(() => {
+                const map = this.$refs.map.mapObject;
+                this.customShapeLayer = new window.L.FeatureGroup().addTo(map);
+                this.initDrawControl(this.customShapeLayer, this.drawnFigureColor);
+                this.toggleDrawTool(this.showDrawTool);
+                this.registerMapEvents();
             });
+
         }
     }
 </script>
