@@ -1,3 +1,3 @@
 package kochanski.adam.busflowpicker.model.entities
 
-data class GeoPoint(var latitude: Float, var longitude: Float)
+data class GeoPoint(var lat: Float, var lon: Float)

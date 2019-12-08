@@ -32,5 +32,5 @@ class DistrictGeographyLoaderImpl : DistrictGeographyLoader {
     private fun getDistrictCoordinatesFromFile(file: File): List<GeoPoint> =
             gson.fromJson(file.readText(), JsonElement::class.java)
                     .asJsonArray
-                    .map { GeoPoint(longitude = it.asJsonArray[0].asFloat, latitude = it.asJsonArray[1].asFloat) }
+                    .map { GeoPoint(lon = it.asJsonArray[0].asFloat, lat = it.asJsonArray[1].asFloat) }
 }
