@@ -1,7 +1,8 @@
-package kochanski.adam.busflowpicker.model
+package kochanski.adam.busflowpicker.configs
 
 import com.mongodb.reactivestreams.client.MongoClient
 import com.mongodb.reactivestreams.client.MongoClients
+import kochanski.adam.busflowpicker.model.VehicleLocationRepository
 import org.springframework.context.annotation.Bean
 import org.springframework.context.annotation.Configuration
 import org.springframework.data.mongodb.config.AbstractReactiveMongoConfiguration

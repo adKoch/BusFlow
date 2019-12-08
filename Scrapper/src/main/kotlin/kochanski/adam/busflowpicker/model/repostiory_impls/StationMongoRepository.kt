@@ -1,6 +1,6 @@
-package kochanski.adam.busflowpicker.model
+package kochanski.adam.busflowpicker.model.repostiory_impls
 
-import com.mongodb.client.result.UpdateResult
+import kochanski.adam.busflowpicker.model.StationRepository
 import kochanski.adam.busflowpicker.model.entities.Station
 import org.springframework.beans.factory.annotation.Autowired
 import org.springframework.data.mongodb.core.ReactiveMongoTemplate
@@ -34,7 +34,7 @@ class StationMongoRepository(@Autowired val mongoTemplate: ReactiveMongoTemplate
         return mongoTemplate.find<Station>(getNullLinesLimitQuery(limit), Station::class.java)
     }
 
-    override fun updateWithLines(station: Station, lines:List<String>): Mono<Station> {
+    override fun updateWithLines(station: Station, lines: List<String>): Mono<Station> {
         return mongoTemplate.findAndModify(getFindStationQuery(station), getStationLinesUpdate(lines), Station::class.java)
     }
 
@@ -50,7 +50,6 @@ class StationMongoRepository(@Autowired val mongoTemplate: ReactiveMongoTemplate
                 .and("post").`is`(station.post)
                 .and("pool").`is`(station.pool)
                 .and("validFrom").`is`(station.validFrom))
-
     }
 
     private fun getStationLinesUpdate(lines: List<String>): Update {

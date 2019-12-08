@@ -1,10 +1,7 @@
-package kochanski.adam.busflowpicker.services.implementations
+package kochanski.adam.busflowpicker.services
 
 import kochanski.adam.busflowpicker.model.StationRepository
 import kochanski.adam.busflowpicker.model.VehicleLocationRepository
-import kochanski.adam.busflowpicker.services.StationDataRequester
-import kochanski.adam.busflowpicker.services.StationLinesDataRequester
-import kochanski.adam.busflowpicker.services.VehicleDataRequester
 import org.springframework.beans.factory.annotation.Autowired
 import org.springframework.scheduling.annotation.Scheduled
 import org.springframework.stereotype.Component
@@ -13,11 +10,11 @@ import reactor.core.publisher.Mono
 
 @Component
 class SchedulerService(
-        @Autowired val vehicleDataRequester: VehicleDataRequester,
-        @Autowired val stationDataRequester: StationDataRequester,
-        @Autowired val stationLinesDataRequester: StationLinesDataRequester,
-        @Autowired val vehicleLocationRepository: VehicleLocationRepository,
-        @Autowired val stationRepository: StationRepository
+    @Autowired val vehicleDataRequester: VehicleDataRequester,
+    @Autowired val stationDataRequester: StationDataRequester,
+    @Autowired val stationLinesDataRequester: StationLinesDataRequester,
+    @Autowired val vehicleLocationRepository: VehicleLocationRepository,
+    @Autowired val stationRepository: StationRepository
 ) {
     private var stationsBatch = 10
 
@@ -25,6 +22,7 @@ class SchedulerService(
     @Scheduled(cron = "*/10 * * * * *")
     fun scheduleInsert() {
         vehicleDataRequester.requestVehicles()
+                .onErrorStop()
                 .collectList()
                 .subscribe {
                     vehicleLocationRepository.insert(it)
@@ -48,6 +46,7 @@ class SchedulerService(
         stationRepository.deleteAll()
                 .log()
                 .then(Mono.just(stationDataRequester.requestStations()
+                        .onErrorStop()
                         .log()
                         .collectList()
                         .subscribe {
@@ -61,6 +60,7 @@ class SchedulerService(
     @Scheduled(cron = "*/3 * * * * *")
     fun scheduleStationLinesUpdate() {
         stationRepository.findSomeStationsWithoutLines(stationsBatch)
+                .onErrorStop()
                 .log()
                 .subscribe { station ->
                     stationLinesDataRequester.requestLines(station)

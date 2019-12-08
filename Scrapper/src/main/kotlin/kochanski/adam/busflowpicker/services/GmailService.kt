@@ -1,7 +1,6 @@
-package kochanski.adam.busflowpicker.services.implementations
+package kochanski.adam.busflowpicker.services
 
 import java.time.Instant
-import kochanski.adam.busflowpicker.services.MessageService
 import org.springframework.mail.SimpleMailMessage
 import org.springframework.mail.javamail.JavaMailSenderImpl
 import org.springframework.stereotype.Component
