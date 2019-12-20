@@ -22,31 +22,47 @@
                 </v-expansion-panel-content>
             </v-expansion-panel>
         </v-expansion-panels>
-        <v-label v-if="!dataParamsReady" >
+        <v-label v-if="!dataParamsReady">
             {{dataParamsNotReadyLabel}}
         </v-label>
-        <v-btn top class="ma-4"
-               @click="getChartData"
-               color="indigo"
-               dark
-               :disabled="!chosenParamsReady || !dataParamsReady"
-               :loading="loadingChartData"
-               rounded> {{generateChartLabel}}
-        </v-btn>
-        <GChart v-if="generated"
-                :data="gChartData"
-                :type="chosenChartType"
-                :title="chartLabel"
-        />
+        <v-layout class="justify-center">
+            <v-btn top
+                   class="ma-4"
+                   @click="getChartData"
+                   color="indigo"
+                   dark
+                   :disabled="!chosenParamsReady || !dataParamsReady"
+                   :loading="loadingChartData"
+                   rounded> {{generateChartLabel}}
+            </v-btn>
+
+        </v-layout>
+        <v-layout class="justify-center">
+            <GChart v-if="generated"
+                    class="ma-6"
+                    :data="gChartData"
+                    :type="chosenChartType"
+                    :title="chartLabel"
+            />
+        </v-layout>
+        <v-layout class="justify-center">
+            <v-select v-if="generated"
+                      :items="availableChartTypes"
+                      v-model="chosenChartType"
+                      outlined
+                      :item-text="type=>type.text"
+                      :item-value="type=>type.value"
+                      :label="chartTypeLabel"/>
+        </v-layout>
     </v-container>
 </template>
 
 <script>
     import {GChart} from "vue-google-charts"
-    import TypedDatePicker from "./statistic/TypedDatePicker";
-    import TypedTimePicker from "./statistic/TypedTimePicker";
-    import StatisticRepository from "../repository/StatisticRepository";
-    import {stationCountByLines} from "../core/StationAggregation";
+    import TypedDatePicker from "../statistic/TypedDatePicker";
+    import TypedTimePicker from "../statistic/TypedTimePicker";
+    import StatisticRepository from "../../repository/StatisticRepository";
+    import {stationCountByLines} from "../../core/StationAggregation";
 
     export default {
         name: "StatisticsPanel",
@@ -58,7 +74,7 @@
             chartData: {
                 handler(newVal) {
                     let gData = [];
-                    gData.push(['', '']);
+                    gData.push(['Linia', 'Ilość']);
                     newVal.forEach(obj => {
                         gData.push([obj.label, obj.value])
                     });
@@ -82,7 +98,7 @@
         },
         props: ['shownLines', 'shownPolygonsPoints', 'shownStations'],
         data: () => ({
-            sampleSize: 12,
+            sampleSize: 16,
             chartData: [],
             chosenChartType: 'ColumnChart',
             chosenAggregationType: 2,
@@ -93,7 +109,16 @@
             minDateDayOffset: 1,
             generated: false,
             loadingChartData: false,
-            dataParamsNotReadyLabel:"Aby wygenerować wykres potrzebny jest obszar i przystanki...",
+            availableChartTypes: [
+                {text: 'Wykres kolumnowy', value: 'ColumnChart'},
+                {text: 'Wykres liniowy', value: 'LineChart'},
+                {text: 'Wykres kołowy', value: 'PieChart'},
+                {text: 'Histogram', value: 'Histogram'},
+                {text: 'Pola', value: 'AreaChart'},
+                {text: 'Tabela', value: 'Table'}
+            ],
+            chartTypeLabel: "Typ wykresu",
+            dataParamsNotReadyLabel: "Aby wygenerować wykres potrzebny jest obszar i przystanki...",
             generateChartLabel: "Generuj wykres",
             aggregationPeriod: [
                 {text: "60min", value: 3600},
@@ -107,8 +132,7 @@
             datetimePanelHeader: "Zakres czasowy",
             datePickerLabel: "Data początkowa",
             timePickerLabel: "Czas początkowy",
-            chartLabel: "Wykres",
-            chartTypeLabel: "Dane wykresu",
+            chartLabel: "",
             gChartData: [],
             aggregationTypes: [
                 //{name: "Ilość pojazdów w czasie", type: 0},

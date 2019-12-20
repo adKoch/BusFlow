@@ -43,17 +43,17 @@
             'l-marker-cluster': Vue2LeafletMarkerCluster,
         }, data: () => ({
             busIcon: icon({
-                iconUrl: require("../../assets/BusIcon.png"),
+                iconUrl: require("../../../assets/BusIcon.png"),
                 iconSize: [20, 20],
                 iconAnchor: [10, 10]
             }),
             tramIcon: icon({
-                iconUrl: require("../../assets/TramIcon.png"),
+                iconUrl: require("../../../assets/TramIcon.png"),
                 iconSize: [20, 20],
                 iconAnchor: [10, 10]
             }),
             vehicleMarkerClusterIconSpecification: {
-                iconUrl: require("../../assets/VehicleClusterIcon.png"),
+                iconUrl: require("../../../assets/VehicleClusterIcon.png"),
                 iconSize: [24, 24],
                 iconAnchor: [12, 12],
             },
@@ -77,7 +77,7 @@
                 return divIcon({
                     className: "VehicleMarkerCluster",
                     html: `
-                    <img src=${require('../../assets/VehicleClusterIcon.png')} height="25px" width="25px"/>
+                    <img src=${require('../../../assets/VehicleClusterIcon.png')} height="25px" width="25px"/>
                     <span style="visibility: visible;
                             min-width: 50px;
                             background-color: white;

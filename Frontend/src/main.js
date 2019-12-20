@@ -5,7 +5,7 @@ import {Icon} from 'leaflet'
 import 'leaflet/dist/leaflet.css'
 import axios from "axios"
 import VueAxios from "vue-axios"
-import MapView from "./components/View/MapView";
+import MapScreen from "./components/MapScreen";
 
 Vue.config.productionTip = false;
 Vue.use(VueAxios, axios);
@@ -20,5 +20,5 @@ Icon.Default.mergeOptions({
 });
 new Vue({
     vuetify,
-    render: h => h(MapView)
+    render: h => h(MapScreen)
 }).$mount('#app');

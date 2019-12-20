@@ -28,13 +28,13 @@
     import {LMap, LTileLayer} from 'vue2-leaflet'
     import {latLng} from "leaflet";
     import 'leaflet-draw'
-    import VehicleClusters from "./map/VehicleClusters";
-    import StationMarker from "./map/StationMarker";
-    import DistrictPolygon from "./map/DistrictPolygon";
-    import DrawnPolygon from "./map/DrawnPolygon";
-    import {isPointInsidePolygons, polygonToPoints} from "../core/geometryOps";
-    import {polygonUnion} from "../core/geometryOps";
-    import {getDrawControl} from "../core/drawControl";
+    import VehicleClusters from "./view/VehicleClusters";
+    import StationMarker from "./view/StationMarker";
+    import DistrictPolygon from "./view/DistrictPolygon";
+    import DrawnPolygon from "./view/DrawnPolygon";
+    import {isPointInsidePolygons, polygonToPoints} from "../../core/geometryOps";
+    import {polygonUnion} from "../../core/geometryOps";
+    import {getDrawControl} from "../../core/drawControl";
 
     export default {
         name: "MapPanel",
@@ -153,6 +153,6 @@
     }
 </script>
 <style scoped>
-    @import '~leaflet-draw/dist/leaflet.draw-src.css';
-    @import '~leaflet-draw/dist/leaflet.draw.css';
+    @import '../../../node_modules/leaflet-draw/dist/leaflet.draw-src.css';
+    @import '../../../node_modules/leaflet-draw/dist/leaflet.draw.css';
 </style>

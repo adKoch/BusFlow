@@ -24,7 +24,7 @@
 
 <script>
     import {icon, latLng} from "leaflet";
-    import {partAsHexColor} from "../../core/colorOps";
+    import {partAsHexColor} from "../../../core/colorOps";
     import {LMarker, LPopup, LCircle} from 'vue2-leaflet'
 
     export default {
@@ -35,7 +35,7 @@
         },
         data: () => ({
             stationIcon: icon({
-                iconUrl: require("../../assets/StationIcon.png"),
+                iconUrl: require("../../../assets/StationIcon.png"),
                 iconSize: [20, 20],
                 iconAnchor: [10, 10]
             }),

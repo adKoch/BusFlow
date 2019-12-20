@@ -124,8 +124,8 @@
 </template>
 
 <script>
-    import BusMap from "./components/BusMap.vue";
-    import StatisticsPanel from "./components/StatisticsPanel";
+    import BusMap from "./components/map/BusMap.vue";
+    import StatisticsPanel from "./components/map/StatisticsPanel";
     import DistrictRepository from "./repository/DistrictRepository";
     import StationRepository from "./repository/StationRepository";
     import VehicleLocationRepository from "./repository/VehicleLocationRepository";

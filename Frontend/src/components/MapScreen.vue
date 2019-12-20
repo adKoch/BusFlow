@@ -106,8 +106,12 @@
             </div>
         </v-navigation-drawer>
         <v-app-bar color="indigo" dark app fixed clipped-left>
-            <v-app-bar-nav-icon @click.stop="controlPanelVisibility = !controlPanelVisibility"/>
-            <v-app-bar-nav-icon @click.stop="statisticsPanelVisibility=!statisticsPanelVisibility"/>
+            <v-btn icon @click.stop="controlPanelVisibility = !controlPanelVisibility">
+                <v-icon>mdi-bus-marker</v-icon>
+            </v-btn>
+            <v-btn icon @click.stop="statisticsPanelVisibility=!statisticsPanelVisibility">
+                <v-icon>mdi-chart-areaspline</v-icon>
+            </v-btn>
             <v-toolbar-title>
                 {{name}}
             </v-toolbar-title>
@@ -125,14 +129,14 @@
 </template>
 
 <script>
-    import BusMap from "../BusMap";
-    import StatisticsPanel from "../StatisticsPanel";
-    import DistrictRepository from "../../repository/DistrictRepository";
-    import StationRepository from "../../repository/StationRepository";
-    import VehicleLocationRepository from "../../repository/VehicleLocationRepository";
+    import BusMap from "./map/BusMap";
+    import StatisticsPanel from "./map/StatisticsPanel";
+    import DistrictRepository from "../repository/DistrictRepository";
+    import StationRepository from "../repository/StationRepository";
+    import VehicleLocationRepository from "../repository/VehicleLocationRepository";
 
     export default {
-        name: "MapView",
+        name: "MapScreen",
         components: {
             BusMap,
             StatisticsPanel
@@ -177,9 +181,9 @@
             showTram: true,
             showBus: true,
             polygons: [],
-            areaLineMax: 15,
+            areaLineMax: 1,
             showArea: false,
-            areaRadius: 150,
+            areaRadius: 300,
             areaMultiplier: 1,
             dataLoad: {
                 interval: 10,
