@@ -58,9 +58,6 @@ class VehicleLocationMongoRepository(@Autowired val mongoTemplate: ReactiveMongo
                     start, end, maxLatitude, minLatitude, maxLongitude, minLongitude),
                     VehicleLocation::class.java)
 
-    private fun getRequestedInLastTimeQuery(seconds: Long): Query =
-            Query().addCriteria(Criteria("timeSent").gte(LocalDateTime.now().minusSeconds(seconds+20)))
-
     private fun getRequestedByLinesInTimeQueryInRect(lines: List<String>,
                                                      start: LocalDateTime,
                                                      end: LocalDateTime,

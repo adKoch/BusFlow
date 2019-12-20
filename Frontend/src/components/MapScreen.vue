@@ -1,7 +1,7 @@
 <template>
     <v-app>
         <v-navigation-drawer v-model="statisticsPanelVisibility" right app fixed clipped stateless width="420px">
-            <statistics-panel :shown-lines="lines" :shown-stations="stations" :shown-polygons-points="drawnPolygon"/>
+            <statistics-panel :shown-lines="lines" :shown-stations="stations" :shown-polygons-points="drawnPoints"/>
         </v-navigation-drawer>
         <v-navigation-drawer v-model="controlPanelVisibility" app fixed clipped stateless>
             <div class="controlPanel">
@@ -199,6 +199,14 @@
         computed: {
             dataLoadingBarValue: function () {
                 return this.dataLoad.state / this.dataLoad.interval * 100;
+            },
+            drawnPoints: function () {
+                let pointsArray = [];
+                if (this.drawnPolygon.length !== 0) pointsArray.push(this.drawnPolygon);
+                this.districtsAvailable.filter(d => this.districtsShown.includes(d.districtName)).forEach(district => pointsArray.push(district.coordinates.map(c => {
+                    return {latitude: c.lat, longitude: c.lon}
+                })));
+                return pointsArray
             }
         },
         methods: {

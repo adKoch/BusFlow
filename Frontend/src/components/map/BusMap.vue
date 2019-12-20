@@ -69,21 +69,24 @@
             },
             drawnPolygons: {
                 handler() {
-                    this.$emit('input', this.filteredPointsArray)
+                    this.$emit('input', this.drawnPolygonPoints)
                 }
-            }
+            },
         },
         computed: {
             drawnPolygonsUnion: function () {
                 return polygonUnion(this.drawnPolygons)
             },
+            drawnPolygonPoints: function () {
+                return polygonUnion(this.drawnPolygons).geometry.coordinates[0].map(pair => {
+                    return {latitude: pair[0], longitude: pair[1]}
+                })
+            },
             filteredPointsArray: function () {
                 let pointsArray = [];
-                if (polygonUnion(this.drawnPolygons) !== null) {
-                    pointsArray.push(polygonUnion(this.drawnPolygons).geometry.coordinates[0].map(pair => {
-                        return {latitude: pair[0], longitude: pair[1]}
-                    }));
-                }
+                if (this.drawnPolygons.length !== 0) pointsArray.push(polygonUnion(this.drawnPolygons).geometry.coordinates[0].map(pair => {
+                    return {latitude: pair[0], longitude: pair[1]}
+                }));
                 this.districts.forEach(district => pointsArray.push(district.coordinates.map(c => {
                     return {latitude: c.lat, longitude: c.lon}
                 })));
