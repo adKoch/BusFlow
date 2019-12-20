@@ -1,4 +1,4 @@
-package kochanski.adam.api.model
+package kochanski.adam.api.model.entity
 
 import java.time.LocalDateTime
 import org.springframework.data.mongodb.core.mapping.Document

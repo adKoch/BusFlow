@@ -23,5 +23,4 @@ class CorsConfig : WebFilter {
             chain.filter(ctx)
         }
     }
-
 }

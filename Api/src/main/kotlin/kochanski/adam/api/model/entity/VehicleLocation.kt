@@ -1,7 +1,7 @@
-package kochanski.adam.busflowpicker.model.entities
+package kochanski.adam.api.model.entity
 
-import org.springframework.data.mongodb.core.mapping.Document
 import java.time.Instant
+import org.springframework.data.mongodb.core.mapping.Document
 import java.time.LocalDateTime
 
 @Document("vehicle_location")

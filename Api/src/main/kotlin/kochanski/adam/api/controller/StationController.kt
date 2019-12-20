@@ -1,6 +1,6 @@
 package kochanski.adam.api.controller
 
-import kochanski.adam.api.model.Station
+import kochanski.adam.api.model.entity.Station
 import kochanski.adam.api.services.StationService
 import org.springframework.beans.factory.annotation.Autowired
 import org.springframework.web.bind.annotation.*

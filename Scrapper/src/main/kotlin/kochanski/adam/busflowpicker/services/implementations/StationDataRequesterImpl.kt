@@ -5,7 +5,7 @@ import com.google.gson.JsonObject
 import kochanski.adam.busflowpicker.model.entities.Station
 import kochanski.adam.busflowpicker.model.utils.normaliseJson
 import kochanski.adam.busflowpicker.model.utils.stationMappedFromJsonObject
-import kochanski.adam.busflowpicker.services.StationDataRequester
+import kochanski.adam.busflowpicker.services.Requesters.StationDataRequester
 import org.springframework.stereotype.Component
 import org.springframework.web.reactive.function.client.WebClient
 import reactor.core.publisher.Flux

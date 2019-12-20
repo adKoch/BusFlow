@@ -1,76 +1,68 @@
 package kochanski.adam.busflowpicker.services
 
-import kochanski.adam.busflowpicker.model.StationRepository
-import kochanski.adam.busflowpicker.model.VehicleLocationRepository
+import kochanski.adam.busflowpicker.services.implementations.StationService
+import kochanski.adam.busflowpicker.services.implementations.VehicleLocationService
 import org.springframework.beans.factory.annotation.Autowired
 import org.springframework.scheduling.annotation.Scheduled
 import org.springframework.stereotype.Component
 import org.springframework.transaction.annotation.Transactional
+import org.springframework.util.backoff.BackOff
 import reactor.core.publisher.Mono
+import java.time.Duration
+import java.time.LocalDateTime
+import javax.annotation.PostConstruct
 
 @Component
 class SchedulerService(
-    @Autowired val vehicleDataRequester: VehicleDataRequester,
-    @Autowired val stationDataRequester: StationDataRequester,
-    @Autowired val stationLinesDataRequester: StationLinesDataRequester,
-    @Autowired val vehicleLocationRepository: VehicleLocationRepository,
-    @Autowired val stationRepository: StationRepository
+        @Autowired val vehicleLocationService: VehicleLocationService,
+        @Autowired val stationService: StationService
 ) {
-    private var stationsBatch = 10
+    private val stationsBatch = 10
+    private val stationsHoldThreshold = LocalDateTime.now().minusDays(2L)
+    private val loadingNewDataInterval = Duration.ofSeconds(10L)
+    private val deleteInterval = Duration.ofDays(1L)
+    private val stationUpdateInterval = Duration.ofDays(30L)
+    private val stationLinesUpdateInterval=Duration.ofSeconds(3L)
 
-    @Transactional
-    @Scheduled(cron = "*/10 * * * * *")
-    fun scheduleInsert() {
-        vehicleDataRequester.requestVehicles()
-                .onErrorStop()
-                .collectList()
-                .subscribe {
-                    vehicleLocationRepository.insert(it)
-                            .log()
-                            .subscribe()
-                }
+    @PostConstruct
+    fun scheduleAll(){
+        scheduleLoadingNewData()
+        scheduleDeleteOlderThanThreshold()
+        // scheduleStationUpdate()
+        scheduleStationLinesUpdate()
     }
 
-    @Transactional
-    @Scheduled(cron = "1 0 */1 * * *")
-    fun scheduleDeleteThenInsert() {
-        vehicleLocationRepository.deleteAll()
+    private fun scheduleLoadingNewData() {
+        vehicleLocationService.loadNewData()
                 .log()
-                .then<Unit>(Mono.justOrEmpty(scheduleInsert()))
+                .delaySubscription(loadingNewDataInterval)
+                .retry()
+                .repeat()
                 .subscribe()
     }
 
-    @Transactional
-    // @Scheduled(cron = "1 0 0 1 */1 *")
-    fun scheduleStationUpdate() {
-        stationRepository.deleteAll()
+    private fun scheduleDeleteOlderThanThreshold() {
+        vehicleLocationService.deleteOlderThan(stationsHoldThreshold)
                 .log()
-                .then(Mono.just(stationDataRequester.requestStations()
-                        .onErrorStop()
-                        .log()
-                        .collectList()
-                        .subscribe {
-                            stationRepository.insert(it)
-                                    .log()
-                                    .subscribe()
-                        }))
-                .subscribe { }
+                .delaySubscription(deleteInterval)
+                .repeat()
+                .subscribe()
     }
 
-    @Scheduled(cron = "*/3 * * * * *")
-    fun scheduleStationLinesUpdate() {
-        stationRepository.findSomeStationsWithoutLines(stationsBatch)
-                .onErrorStop()
+
+    private fun scheduleStationUpdate() {
+        stationService.updateStations()
                 .log()
-                .subscribe { station ->
-                    stationLinesDataRequester.requestLines(station)
-                            .log()
-                            .collectList()
-                            .log()
-                            .subscribe {
-                                if (it.isEmpty()) it.add("brak")
-                                stationRepository.updateWithLines(station, it).log().subscribe()
-                            }
-                }
+                .delaySubscription(stationUpdateInterval)
+                .repeat()
+                .subscribe()
+    }
+
+    private fun scheduleStationLinesUpdate() {
+        stationService.updateLinesForStations(stationsBatch)
+                .log()
+                .delaySubscription(stationLinesUpdateInterval)
+                .repeat()
+                .subscribe()
     }
 }

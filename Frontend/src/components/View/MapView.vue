@@ -14,9 +14,10 @@
                          outlined>
                     {{requestAlert.message}}
                 </v-alert>
-                <v-card ref="requestStatusCard"
+                <v-card v-if="lines.length!==0"
+                        ref="requestStatusCard"
                         loader-height="7"
-                        :loader="dataLoad.isBeingLoaded"
+                        :loading="dataLoad.isBeingLoaded"
                         class="mt-4">
                     <v-container>
                         <v-row align="center">
@@ -124,15 +125,14 @@
 </template>
 
 <script>
-    import BusMap from "./components/BusMap.vue";
-    import StatisticsPanel from "./components/StatisticsPanel";
-    import DistrictRepository from "./repository/DistrictRepository";
-    import StationRepository from "./repository/StationRepository";
-    import VehicleLocationRepository from "./repository/VehicleLocationRepository";
-    import {debounce} from 'debounce'
+    import BusMap from "../BusMap";
+    import StatisticsPanel from "../StatisticsPanel";
+    import DistrictRepository from "../../repository/DistrictRepository";
+    import StationRepository from "../../repository/StationRepository";
+    import VehicleLocationRepository from "../../repository/VehicleLocationRepository";
 
     export default {
-        name: "App",
+        name: "MapView",
         components: {
             BusMap,
             StatisticsPanel
@@ -140,13 +140,8 @@
         watch: {
             lines: {
                 handler() {
-                    this.dataLoad.state = this.dataLoad.interval-1;
+                    this.dataLoad.state = this.dataLoad.interval - 1;
                     this.checkRefresh();
-                }
-            },
-            areaRadius: {
-                handler(newVal) {
-                    debounce(200, newVal)
                 }
             }
         },

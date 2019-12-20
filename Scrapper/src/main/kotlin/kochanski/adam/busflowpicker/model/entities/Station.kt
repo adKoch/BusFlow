@@ -2,6 +2,7 @@ package kochanski.adam.busflowpicker.model.entities
 
 import java.time.LocalDateTime
 import org.springframework.data.mongodb.core.mapping.Document
+import java.time.Instant
 
 @Document("station")
 data class Station(

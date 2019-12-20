@@ -5,6 +5,7 @@ import java.time.LocalDateTime
 import java.time.format.DateTimeFormatter
 import kochanski.adam.busflowpicker.model.entities.Station
 import kochanski.adam.busflowpicker.model.entities.VehicleLocation
+import java.time.Instant
 
 const val warsawApiVehicleDateTimePattern = "yyyy-MM-dd HH:mm:ss"
 const val warsawApiStationDateTimePattern = "yyyy-MM-dd HH:mm:ss.s"
