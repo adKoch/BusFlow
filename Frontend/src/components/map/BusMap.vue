@@ -51,7 +51,7 @@
             zoom: 15.0,
             center: latLng(52.25265306914573, 20.898388624191284),
             url: 'http://{s}.tile.osm.org/{z}/{x}/{y}.png',
-            attribution: '&copy; <a href="http://osm.org/copyright">OpenStreetMap</a> contributors',
+            attribution: '&copy; <a href="http://osm.org/copyright">OpenStreetMap</a> | <a href="http://api.um.warszawa.pl">Miasto Stołeczne Warszawa</a>',
             customShapeLayer: [],
             drawControl: {},
             stationLineLabel: "Linie",
