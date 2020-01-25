@@ -74,7 +74,7 @@
             chartData: {
                 handler(newVal) {
                     let gData = [];
-                    gData.push(['Linia', 'Ilość']);
+                    gData.push(['Linia', 'Liczba']);
                     newVal.forEach(obj => {
                         gData.push([obj.label, obj.value])
                     });

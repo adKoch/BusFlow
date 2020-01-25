@@ -8,19 +8,19 @@
             <district-polygon :key="district.id"
                               :district="district"/>
         </template>
-        <template
-                v-for="station in stations.filter(st=>!filterByPolygons || isPointInsidePolygons(st.latitude,st.longitude,filteredPointsArray))">
+        <vehicle-clusters
+                :vehicles="vehicles.filter(veh=>!filterByPolygons || isPointInsidePolygons(veh.latitude,veh.longitude,filteredPointsArray))"
+                :show-tram="showTram"
+                :show-bus="showBus"/>
+        <template v-for="station in stations.filter(st=>!filterByPolygons || isPointInsidePolygons(st.latitude,st.longitude,filteredPointsArray))">
             <station-marker :key="station.id"
+                            v-if="showStations"
                             :station="station"
                             :circle-radius="stationRadius"
                             :max-line-count="lineCount"
                             :show-circle="showStationRadius"
                             :station-line-label="stationLineLabel"/>
         </template>
-        <vehicle-clusters
-                :vehicles="vehicles.filter(veh=>!filterByPolygons || isPointInsidePolygons(veh.latitude,veh.longitude,filteredPointsArray))"
-                :show-tram="showTram"
-                :show-bus="showBus"/>
     </l-map>
 </template>
 
@@ -46,7 +46,7 @@
             StationMarker,
             DrawnPolygon,
         },
-        props: ['showDrawTool', 'vehicles', 'districts', 'stations', 'showBus', 'showTram', 'showStationRadius', 'stationRadius', 'lineCount', 'filterByPolygons'],
+        props: ['showDrawTool', 'vehicles', 'districts', 'stations', 'showBus', 'showTram','showStations', 'showStationRadius', 'stationRadius', 'lineCount', 'filterByPolygons'],
         data: () => ({
             zoom: 15.0,
             center: latLng(52.25265306914573, 20.898388624191284),

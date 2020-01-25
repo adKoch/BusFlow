@@ -18,21 +18,22 @@ import reactor.core.publisher.Mono
 
 @Repository
 class StationMongoRepository(@Autowired val mongoTemplate: ReactiveMongoTemplate) : StationRepository {
+
     override fun getAllActiveStationsByLines(lines: List<String>): Flux<Station> {
         return mongoTemplate.find(getActiveStationsByLinesQuery(lines), Station::class.java)
     }
-
-/*
-    override fun getStationCountForLines(lines: List<String>): Flux<StationStatistic> {
-        return mongoTemplate.aggregate(getStationCountForLinesAggregation(lines),StationStatistic::class.java)
-    }
-*/
 
     private fun getActiveStationsByLinesQuery(lines: List<String>): Query =
             Query().addCriteria(Criteria()
                     .and("validFrom").lte(LocalDateTime.now())
                     .and("lines").`in`(lines))
 
+
+    /*
+        override fun getStationCountForLines(lines: List<String>): Flux<StationStatistic> {
+            return mongoTemplate.aggregate(getStationCountForLinesAggregation(lines),StationStatistic::class.java)
+        }
+    */
 
     private fun getStationCountForLinesAggregation(lines: List<String>): TypedAggregation<StationStatistic> {
         return newAggregation(StationStatistic::class.java,

@@ -10,14 +10,16 @@ function polygonsToTurfPolygons(polygons) {
     return retPolygons;
 }
 
-function pointInsidePolygon(latitude, longitude, points) {
+function pointInsidePolygon(pointLatitude, pointLongitude, polygonPoints) {
     let i = 0;
-    let j = points.length - 1;
+    let j = polygonPoints.length - 1;
     let result = false;
-    while (i < points.length) {
-        if (points[i].latitude > latitude !== points[j].latitude > latitude &&
-            longitude < (points[j].longitude - points[i].longitude) *
-            (latitude - points[i].latitude) / (points[j].latitude - points[i].latitude) + points[i].longitude) {
+    while (i < polygonPoints.length) {
+        if (polygonPoints[i].latitude > pointLatitude !== polygonPoints[j].latitude > pointLatitude &&
+            pointLongitude < (polygonPoints[j].longitude - polygonPoints[i].longitude) *
+            (pointLatitude - polygonPoints[i].latitude) /
+            (polygonPoints[j].latitude - polygonPoints[i].latitude) +
+            polygonPoints[i].longitude) {
             result = !result
         }
         j = i++

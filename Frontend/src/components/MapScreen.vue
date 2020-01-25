@@ -49,6 +49,11 @@
                                         :label="showTramLabel"
                                         class="mx-2"/>
                         </v-row>
+                        <v-row>
+                            <v-checkbox v-model="showStations"
+                                        :label="showStationsLabel"
+                                        class="mx-1"/>
+                        </v-row>
                         <v-combobox v-model="lines"
                                     chips
                                     multiple
@@ -61,6 +66,7 @@
                                         :label="showDrawToolLabel"
                                         class="mx-2"/>
                         </v-row>
+
                         <v-row>
                             <v-select class="mx-5" :items="districtsAvailable"
                                       v-model="districtsShown"
@@ -117,7 +123,7 @@
             </v-toolbar-title>
         </v-app-bar>
         <v-content>
-            <busMap :vehicles="vehicles" :show-bus="showBus" :show-tram="showTram"
+            <busMap :vehicles="vehicles" :show-bus="showBus" :show-tram="showTram" :show-stations="showStations"
                     :stations="stations" :line-count="areaLineMax" :station-radius="areaRadius*areaMultiplier"
                     :show-station-radius="showArea"
                     :districts="districtsAvailable.filter(d=>districtsShown.includes(d.districtName))"
@@ -150,7 +156,7 @@
             }
         },
         data: () => ({
-            name: "BusFlow",
+            name: "Zakład transportu miejskiego",
             linesLabel: "Linie",
             drawnPolygon: [],
             apiUrl: "http://localhost:8282",
@@ -180,6 +186,8 @@
             showDrawTool: false,
             showTram: true,
             showBus: true,
+            showStations: true,
+            showStationsLabel:"Przystanki",
             polygons: [],
             areaLineMax: 1,
             showArea: false,
